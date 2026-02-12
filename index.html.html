@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bbox Sales Planner</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--r:#E30613;--y:#FFC947;--g:#00C49A;--b:#4ECDC4;--p:#A882FF;--o:#FF9F43;--bg:#0F0F1A;--c:#1A1A2E;--ch:#222240;--t1:#F0F0F5;--t2:#8888AA;--t3:#555577;--bd:#2A2A44}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);overflow:hidden;height:100vh}
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;background:var(--c);border-bottom:1px solid var(--bd);height:54px;z-index:1000;position:relative}
+.hdr-l{display:flex;align-items:center;gap:14px}
+.logo{display:flex;align-items:center;gap:8px}
+.logo-i{width:32px;height:32px;background:linear-gradient(135deg,#E30613,#FF6B35);border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:white}
+.logo-t{font-size:16px;font-weight:700}.logo-t span{color:var(--r)}
+.badge{background:rgba(227,6,19,0.12);color:var(--r);padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+.hdr-r{display:flex;align-items:center;gap:10px}
+.hs{text-align:center;padding:0 12px;border-right:1px solid var(--bd)}.hs:last-child{border:none}
+.hs-v{font-family:'Space Mono',monospace;font-size:15px;font-weight:700}
+.hs-l{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.3px}
+.lay{display:flex;height:calc(100vh - 54px)}
+.sb{width:360px;min-width:360px;background:var(--c);border-right:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden}
+.sb-s{padding:12px;border-bottom:1px solid var(--bd)}
+.sbox{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:8px 12px;transition:border-color .2s}
+.sbox:focus-within{border-color:var(--r)}
+.sbox svg{width:14px;height:14px;color:var(--t3);flex-shrink:0}
+.sbox input{background:none;border:none;color:var(--t1);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;width:100%}
+.sbox input::placeholder{color:var(--t3)}
+.fr{display:flex;gap:4px;padding:8px 12px;border-bottom:1px solid var(--bd);flex-wrap:wrap}
+.ft{padding:4px 10px;border-radius:16px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--bd);background:transparent;color:var(--t2);font-family:'DM Sans',sans-serif;transition:all .15s;white-space:nowrap}
+.ft:hover{border-color:var(--t3)}.ft.on{background:var(--r);border-color:var(--r);color:white}
+.ml{flex:1;overflow-y:auto;padding:6px}
+.ml::-webkit-scrollbar{width:5px}.ml::-webkit-scrollbar-track{background:transparent}.ml::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px}
+.mi{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;transition:all .1s;margin-bottom:2px}
+.mi:hover{background:var(--ch)}.mi.sel{background:rgba(227,6,19,0.1);outline:1px solid rgba(227,6,19,0.3)}
+.md{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.md-h{background:var(--r);box-shadow:0 0 6px rgba(227,6,19,.5)}.md-m{background:var(--y)}.md-l{background:var(--b)}.md-d{background:var(--g)}
+.mn{flex:1;min-width:0}
+.mn-n{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mn-m{font-size:10px;color:var(--t3);font-family:'Space Mono',monospace}
+.mg{text-align:right;flex-shrink:0}
+.mg-v{font-family:'Space Mono',monospace;font-size:14px;font-weight:700}
+.mg-v.h{color:var(--r)}.mg-v.m{color:var(--y)}.mg-v.l{color:var(--b)}.mg-v.d{color:var(--g)}
+.mg-l{font-size:9px;color:var(--t3)}
+.sw-b{display:inline-block;background:rgba(168,130,255,.15);color:var(--p);font-size:9px;font-weight:600;padding:1px 5px;border-radius:4px;margin-left:4px}
+.mc{flex:1;position:relative}
+#map{width:100%;height:100%;background:var(--bg)}
+.leaflet-container{background:var(--bg)!important}
+.tt{background:var(--c)!important;border:1px solid var(--bd)!important;border-radius:10px!important;padding:0!important;box-shadow:0 8px 32px rgba(0,0,0,.5)!important;color:var(--t1)!important;font-family:'DM Sans',sans-serif!important;min-width:280px}
+.tt .leaflet-tooltip-content{margin:0!important}.tt::before{display:none!important}
+.tt-h{padding:12px 14px 8px;border-bottom:1px solid var(--bd)}
+.tt-t{font-size:14px;font-weight:700}
+.tt-s{font-family:'Space Mono',monospace;font-size:10px;color:var(--t3);margin-top:1px}
+.tt-g{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:1px;background:var(--bd)}
+.tt-c{background:var(--c);padding:8px 6px;text-align:center}
+.tt-v{font-family:'Space Mono',monospace;font-size:14px;font-weight:700}
+.tt-l{font-size:8px;color:var(--t3);text-transform:uppercase;letter-spacing:.3px}
+.tt-bw{padding:8px 14px 10px}
+.tt-bl{display:flex;justify-content:space-between;font-size:9px;color:var(--t3);margin-bottom:3px}
+.tt-b{height:5px;background:var(--bg);border-radius:3px;overflow:hidden}
+.tt-bf{height:100%;border-radius:3px}
+.cm{display:flex;align-items:center;justify-content:center;border-radius:50%;font-family:'Space Mono',monospace;font-weight:700;color:white;border:2px solid rgba(255,255,255,.25);box-shadow:0 2px 8px rgba(0,0,0,.4);cursor:pointer;transition:transform .12s}
+.cm:hover{transform:scale(1.15)}
+.leg{position:absolute;bottom:20px;left:20px;background:var(--c);border:1px solid var(--bd);border-radius:10px;padding:14px;z-index:999}
+.leg-t{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--t3);margin-bottom:8px}
+.leg-i{display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:11px;color:var(--t2)}
+.leg-c{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+.dp{width:400px;min-width:400px;background:var(--c);border-left:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden;transition:all .25s}
+.dp.hid{width:0;min-width:0;border:none;padding:0;overflow:hidden}
+.dh{padding:16px 18px;border-bottom:1px solid var(--bd)}
+.dc-btn{float:right;background:none;border:none;color:var(--t3);cursor:pointer;font-size:16px;padding:2px 6px;border-radius:4px}
+.dc-btn:hover{color:var(--t1);background:var(--ch)}
+.dm{font-size:20px;font-weight:700;margin-bottom:3px}
+.dsub{font-family:'Space Mono',monospace;font-size:11px;color:var(--t3)}
+.dsg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:14px 18px;border-bottom:1px solid var(--bd)}
+.ds{background:var(--bg);border-radius:8px;padding:10px 12px;text-align:center}
+.ds-v{font-family:'Space Mono',monospace;font-size:20px;font-weight:700}
+.ds-l{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.3px;margin-top:1px}
+.dcc{flex:1;overflow-y:auto;padding:14px 18px}
+.dcc::-webkit-scrollbar{width:5px}.dcc::-webkit-scrollbar-track{background:transparent}.dcc::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px}
+.st{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--t3);margin:16px 0 10px}.st:first-child{margin-top:0}
+.pc{background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:12px;margin-bottom:8px;transition:all .15s}
+.pc:hover{border-color:rgba(227,6,19,.3)}
+.pt{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+.pn{font-size:13px;font-weight:600}
+.pty{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;padding:2px 7px;border-radius:5px;flex-shrink:0;white-space:nowrap}
+.ty-re{background:rgba(78,205,196,.12);color:var(--b)}
+.ty-su{background:rgba(255,201,71,.12);color:var(--y)}
+.ty-ho{background:rgba(227,6,19,.12);color:var(--r)}
+.ty-la{background:rgba(0,196,154,.12);color:var(--g)}
+.ty-el{background:rgba(168,130,255,.12);color:var(--p)}
+.ty-pu{background:rgba(255,159,67,.12);color:var(--o)}
+.pr{font-size:11px;color:var(--t3);line-height:1.4}
+.ps{display:flex;align-items:center;gap:5px;margin-top:6px}
+.psb{flex:1;height:3px;background:var(--c);border-radius:2px;overflow:hidden}
+.psf{height:100%;border-radius:2px}
+.psl{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;width:30px;text-align:right}
+.lr{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg);border-radius:6px;margin-bottom:4px;font-size:12px}
+.lr-n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--t2)}
+.lr-d{font-family:'Space Mono',monospace;font-weight:600;flex-shrink:0}
+.lr-f{font-family:'Space Mono',monospace;font-size:11px;flex-shrink:0;width:50px;text-align:right}
+.lr-sw{font-size:8px;font-weight:700;background:rgba(168,130,255,.15);color:var(--p);padding:1px 5px;border-radius:3px;flex-shrink:0}
+.tip{background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:12px;margin-bottom:8px;font-size:12px;color:var(--t2);line-height:1.5}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:30px;text-align:center}
+.empty-i{font-size:36px;margin-bottom:12px}.empty-t{font-size:15px;font-weight:600;margin-bottom:6px}
+.empty-d{font-size:12px;color:var(--t3);line-height:1.5}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <div class="hdr-l">
+    <div class="logo"><div class="logo-i">Bb</div><div class="logo-t"><span>Bbox</span> Sales Planner</div></div>
+    <div class="badge">Swap &amp; Growth &middot; 779 Lockers &middot; 292 Municipalities</div>
+  </div>
+  <div class="hdr-r">
+    <div class="hs"><div class="hs-v" style="color:var(--r)" id="hGap">&mdash;</div><div class="hs-l">Doors Gap</div></div>
+    <div class="hs"><div class="hs-v" style="color:var(--p)" id="hSwaps">&mdash;</div><div class="hs-l">Swaps</div></div>
+    <div class="hs"><div class="hs-v" style="color:var(--g)" id="hCov">&mdash;</div><div class="hs-l">Coverage</div></div>
+    <div class="hs"><div class="hs-v" style="color:var(--b)" id="hLk">&mdash;</div><div class="hs-l">Lockers</div></div>
+  </div>
+</div>
+<div class="lay">
+  <div class="sb">
+    <div class="sb-s"><div class="sbox">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="si" placeholder="Search municipality, zip, zone..." oninput="filterList()">
+    </div></div>
+    <div class="fr" style="border-bottom:none;padding-bottom:4px">
+      <span style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;width:100%;margin-bottom:2px">Zone</span>
+      <button class="ft fz on" data-z="all" onclick="setZone('all',this)">All zones</button>
+      <button class="ft fz" data-z="A" onclick="setZone('A',this)">Zone A <span style="opacity:.6">(29)</span></button>
+      <button class="ft fz" data-z="B" onclick="setZone('B',this)">Zone B <span style="opacity:.6">(150)</span></button>
+      <button class="ft fz" data-z="C" onclick="setZone('C',this)">Zone C <span style="opacity:.6">(113)</span></button>
+    </div>
+    <div class="fr">
+      <span style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;width:100%;margin-bottom:2px">Status</span>
+      <button class="ft fu on" data-u="all" onclick="setUrg('all',this)">All</button>
+      <button class="ft fu" data-u="high" onclick="setUrg('high',this)">&#x1F534; High</button>
+      <button class="ft fu" data-u="med" onclick="setUrg('med',this)">&#x1F7E1; Med</button>
+      <button class="ft fu" data-u="low" onclick="setUrg('low',this)">&#x1F535; Low</button>
+      <button class="ft fu" data-u="swap" onclick="setUrg('swap',this)">&#x1F504; Swap</button>
+    </div>
+    <div class="ml" id="ml"></div>
+  </div>
+  <div class="mc">
+    <div id="map"></div>
+    <div class="leg">
+      <div class="leg-t">Door Gap (Sc3 2026)</div>
+      <div class="leg-i"><div class="leg-c" style="background:var(--r)"></div>High (200+ doors)</div>
+      <div class="leg-i"><div class="leg-c" style="background:var(--y)"></div>Medium (50-199)</div>
+      <div class="leg-i"><div class="leg-c" style="background:var(--b)"></div>Low (1-49)</div>
+      <div class="leg-i"><div class="leg-c" style="background:var(--g)"></div>Covered (0)</div>
+      <div class="leg-i" style="margin-top:6px;border-top:1px solid var(--bd);padding-top:6px"><div class="leg-c" style="background:var(--p)"></div>Has swap-pending lockers</div>
+    </div>
+  </div>
+  <div class="dp hid" id="dp">
+    <div id="dc">
+      <div class="empty"><div class="empty-i">&#x1F4CD;</div><div class="empty-t">Select a municipality</div><div class="empty-d">Click a marker or pick from the list to see locker details, swap info, and partner suggestions.</div></div>
+    </div>
+  </div>
+</div>
+<script>
+const D=[["BRUSSEL",["1000","1020","1120"],"A",50.8648,4.3459,195,392,392,1780,476,8,8,[["BBOX DISTRIB. AGORA GALERIE BXL",13,38.5,1],["BBOX DISTRIB. T&T GARE MARITIME",26,76.2,1],["BBOX DISTRIB DOCKS BRUXSEL",39,14.8,1],["BBOX DISTRIB GARE BRUX-CEN",52,2.8,1],["BBOX DISTRIB LIB LAEKEN",13,44.5,1],["BBOX DISTRIB AVIA LAKEN",13,49.8,1],["BBOX DISTRIB RMS DE WAND",26,42.1,1],["BBOX DISTRIB CITYDEV N-O-H",13,10.7,1]]],
+["SCHAARBEEK",["1030"],"A",50.8667,4.3831,65,96,122,599,101,2,2,[["BBOX DISTRIB GREAT MARKET",26,55.9,1],["BBOX DISTRIB. GARE SCHAERBEEK",39,18.3,1]]],
+["ETTERBEEK",["1040"],"A",50.8366,4.3881,65,192,192,1034,241,4,4,[["BBOX DISTRIB ESSOETTERBEEK",13,43.1,1],["BBOX DISTRIB LUKOIL R GRAY",13,55.9,1],["BBOX DISTRIB BPOST ETTERBEEK TERVUEREN",13,51.8,1],["BBOX DISTRIB STUDHUIS VUB",26,57.2,1]]],
+["ELSENE",["1050"],"A",50.8278,4.3735,78,144,144,697,67,3,3,[["BBOX DISTRIB XIOR COURONNE",26,33.4,1],["BBOX DISTRIB GARE ETTERBEEK",26,39.1,1],["BBOX DISTRIB LIDL GRAY-IXE",26,32.8,1]]],
+["SINT-GILLIS",["1060"],"A",50.8267,4.3452,39,48,57,430,32,1,1,[["BBOX DISTRIB GARE BXL-MIDI",39,44.4,1]]],
+["ANDERLECHT",["1070"],"A",50.8102,4.3242,143,288,295,1032,106,6,6,[["BBOX DISTRIB GARE ANDERLECHT",13,28.4,1],["BBOX DISTRIB PROXYDELHAIZE",26,31.3,1],["BBOX DISTRIB WESTLAND AND",26,47.7,1],["BBOX DISTRIB HÔPITAL ERASM",26,19.4,1],["BBOX DISTRIB ERASME AND.",26,7.5,1],["BBOX DISTRIB RUE LAITERIE",26,34.8,1]]],
+["SINT-JANS-MOLENBEEK",["1080"],"A",50.866,4.2926,13,48,59,142,9,1,1,[["BBOX DISTRIB WESTSTATION BXL",13,44.5,1]]],
+["SINT-AGATHA-BERCHEM",["1082"],"B",50.8333,4.307,39,156,156,435,83,2,0,[["BBOX DISTRIB. BPOST BERCH.-S.AG SCHWEIT.",13,46.8,0],["BBOX DISTRIB SHOP BASILIX",26,35.4,0]]],
+["GANSHOREN",["1083"],"B",50.8741,4.31,13,78,78,169,45,1,0,[["BBOX DISTRIB BPOST GANSHOREN BASILIQUE",13,41.5,0]]],
+["JETTE",["1090"],"A",50.8792,4.3244,91,288,288,1460,425,6,6,[["BBOX DISTRIB BXL HLTH CMPS",26,16.2,1],["BBOX DISTRIB.PL J-L THYS JETTE",13,67.6,1],["BBOX DISTRIB. BRAVOURE JETTE",13,64.9,1],["BBOX DISTRIB N-D LOURDES JETTE",13,61.9,1],["BBOX DISTRIB. ST LEGRELLE JETTE",13,58.5,1],["BBOX DISTRIB E. DE SMET JETTE",13,60.9,1]]],
+["EVERE",["1140"],"B",50.8667,4.4019,26,78,78,431,59,1,0,[["BBOX DISTRIB TRAFIC EVERE",26,62.2,0]]],
+["SINT-PIETERS-WOLUWE",["1150"],"A",50.8422,4.4317,26,48,66,343,59,1,1,[["BBOX DISTRIB STOCKEL SQUAR",26,47.5,1]]],
+["OUDERGEM",["1160"],"B",50.8161,4.4322,13,78,78,108,10,1,0,[["BBOX DISTRIB BPOST AUDERGHEM",13,32.8,0]]],
+["WATERMAAL-BOSVOORDE",["1170"],"B",50.7972,4.4086,39,78,78,366,29,1,0,[["BBOX DISTRIB DELHAIZE W-B",39,37.6,0]]],
+["UKKEL",["1180"],"A",50.8003,4.3333,52,144,144,542,67,3,3,[["BBOX DISTRIB GATTI SHOP",13,49.5,1],["BBOX DISTRIB CARWASH LYCÉE",13,47.5,1],["BBOX DISTRIB UCCLE ST-ELISABTH",26,30.9,1]]],
+["VORST",["1190"],"A",50.8102,4.31,26,48,73,395,70,1,1,[["BBOX DISTRIB LUKOIL FOREST",26,54.4,1]]],
+["SINT-LAMBRECHTS-WOLUWE",["1200"],"A",50.8422,4.4317,78,144,156,942,93,3,3,[["BBOX DISTRIB CARREFOUR G. HENRI",26,53.2,1],["BBOX DISTRIB WOLUWE SHOPPING",26,55.2,1],["BBOX DISTRIB CU SAINT-LUC",26,33.6,1]]],
+["SINT-JOOST-TEN-NODE",["1210"],"B",50.8556,4.3722,13,78,78,158,21,1,0,[["BBOX DISTRIB BPOST BRUXELLES MADOU",13,45.8,0]]],
+["LA HULPE",["1310"],"C",50.6833,4.3667,13,96,96,301,110,1,0,[["BBOX DISTRIB GARE LA HULPE",13,63.9,0]]],
+["RIXENSART",["1330","1332"],"B",50.6867,4.2734,26,156,156,263,38,2,0,[["BBOX DISTRIB GARE RIXENSART",13,48.8,0],["BBOX DISTRIB GARE GENVAL",13,26.4,0]]],
+["OTTIGNIES-LOUVAIN-LA-NEUVE",["1348"],"B",50.6694,4.6153,130,624,624,1401,217,8,0,[["BBOX DISTRIB PLAT PAYS LLN",13,71.2,0],["BBOX DISTRIB. DE L QUERRE LLN",13,60.2,0],["BBOX DISTRIB. BLVD DU SUD LLN",13,15.7,0],["BBOX DISTRIB. MESPELIERS LLN",13,59.5,0],["BBOX DISTRIB PONT NEUF LLN",13,13.0,0],["BBOX DISTRIB RTE DE BLOCRY LLN",13,56.9,0],["BBOX DISTRIB VOIE D. HENN.",26,20.1,0],["BBOX DISTRIB. GRAND PLACE LLN",26,39.6,0]]],
+["JODOIGNE",["1370"],"B",50.6333,4.65,13,78,78,70,11,1,0,[["BBOX DISTRIB BPOST JODOIGNE",13,19.7,0]]],
+["NIVELLES",["1400"],"B",50.5989,4.3283,91,312,312,785,52,4,0,[["BBOX DISTRIB HÔPITAL DE NIVELLES",13,41.1,0],["BBOX DISTRIB ESSO NIVELLES",26,35.3,0],["BBOX DISTRIB GARE NIVELLES",26,44.3,0],["BBOX DISTRIB Q8 NIVELLES",26,22.4,0]]],
+["WATERLOO",["1410"],"B",50.6167,4.35,13,78,78,305,104,1,0,[["BBOX DISTRIB GARE WATERLOO",13,67.2,0]]],
+["BRAINE-L\'ALLEUD",["1420","1421"],"B",50.58,4.37,91,312,312,1029,104,4,0,[["BBOX DISTRIB. GARE BRAINE L ALL",13,39.8,0],["BBOX DISTRIB PL. ST. SÉBA.",26,45.5,0],["BBOX DISTRIB SACRÉ COEUR ERMITE",26,40.0,0],["BBOX DISTRIB PLACE DOPHA",26,49.3,0]]],
+["COURT-SAINT-ETIENNE",["1490"],"C",50.57,4.56,39,192,192,256,25,2,0,[["BBOX DISTRIB BPOST COURT-ST-ETIENNE",13,30.8,0],["BBOX DISTRIB GARE COURT-ST-ÉTIENNE",26,23.2,0]]],
+["HALLE",["1500","1502"],"B",50.7467,4.2265,52,156,156,1156,307,2,0,[["BBOX DISTRIB BEL&BO HALLE",26,64.7,0],["BBOX DISTRIB GARE LEMBEEK",26,77.3,0]]],
+["PAJOTTEGEM",["1540","1541","1570"],"B",50.75,4.0767,143,486,486,1430,93,6,0,[["BBOX DISTRIB GARE HERNE",26,24.9,0],["BBOX DISTRIB OUD GEMEENTEH",13,51.5,0],["BBOX DISTRIB GARE GALMAARDEN",26,50.8,0],["BBOX DISTRIB GARE TOLLEMBEEK",26,22.4,0],["BBOX DISTRIB SKO VOLLEZELE",26,39.8,0],["BBOX DISTRIB URBANUSBEELD TOLLEMBEEK",26,59.9,0]]],
+["BEVER",["1547"],"C",50.75,4.07,26,96,96,370,25,1,0,[["BBOX DISTRIB. GEM. HUIS BEVER",26,57.7,0]]],
+["SINT-GENESIUS-RODE",["1640"],"B",50.76,4.35,13,78,78,269,78,1,0,[["BBOX DISTRIB. GARE RHODE ST GEN",13,63.9,0]]],
+["DILBEEK",["1700"],"B",50.85,4.1833,39,78,84,1078,393,1,0,[["BBOX DISTRIB CARR. DILBEEK",39,76.4,0]]],
+["ASSE",["1730"],"B",50.82,4.24,91,312,312,675,69,4,0,[["BBOX DISTRIB GARE ASSE",13,44.8,0],["BBOX DISTRIB LUKOIL ASSE",26,41.6,0],["BBOX DISTRIB AURA BUSINESS ASSE",26,16.2,0],["BBOX DISTRIB TUINMACHINES VAEREMANS",26,21.1,0]]],
+["TERNAT",["1740","1742"],"B",50.87,4.09,26,156,156,411,85,2,0,[["BBOX DISTRIB LUKOIL TERNAT",13,73.6,0],["BBOX DISTRIB GARE ESSENE-LOMBEEK",13,35.4,0]]],
+["OPWIJK",["1745"],"C",50.85,4.07,39,96,96,594,89,1,0,[["BBOX DISTRIB GARE OPWIJK",39,56.3,0]]],
+["LENNIK",["1750"],"C",50.8,4.33,26,96,96,388,25,1,0,[["BBOX DISTRIB. FRESHVILLE LENNIK",26,60.7,0]]],
+["LIEDEKERKE",["1770"],"B",50.72,4.17,26,78,78,466,104,1,0,[["BBOX DISTRIB. MUILEM LIEDEKERKE",26,60.5,0]]],
+["MERCHTEM",["1785"],"B",50.96,4.23,26,78,139,357,53,1,0,[["BBOX DISTRIB GARE MERCHTEM",26,50.8,0]]],
+["VILVOORDE",["1800"],"B",50.9283,4.4317,221,936,936,3170,487,12,0,[["BBOX DISTRIB GARE VILVORDE",13,55.9,0],["BBOX DISTRIB WZC DE STICHEL",26,21.9,0],["BBOX DISTRIB KAREL TREKELS",13,78.6,0],["BBOX DISTRIB DERDESCHOOFST",13,62.2,0],["BBOX DISTRIB KANAALPARK",13,51.8,0],["BBOX DISTRIB 4 FONTAINES",13,57.2,0],["BBOX DISTRIB HET VOOR",13,29.4,0],["BBOX DISTRIB ENNEPETAL",13,62.2,0],["BBOX DISTRIB TYNDALE VILVO",26,40.0,0],["BBOX DISTRIB HAZEWEIDE VIL",26,69.6,0],["BBOX DISTRIB HOP. KASSEI",26,44.5,0],["BBOX DISTRIB VILVORD ABEEL",26,74.1,0]]],
+["MACHELEN",["1831"],"B",50.92,4.5,13,78,78,216,34,1,0,[["BBOX DISTRIB GARE DIEGEM",13,60.9,0]]],
+["LONDERZEEL",["1840"],"B",50.95,4.37,78,234,234,1348,202,3,0,[["BBOX DISTRIB. LUKOIL LONDERZEEL",26,59.4,0],["BBOX DISTRIB GARE LONDERZEEL",26,74.8,0],["BBOX DISTRIB GARE MALDEREN",26,57.5,0]]],
+["KAPELLE-OP-DEN-BOS",["1880"],"C",50.97,4.4,26,96,96,563,113,1,0,[["BBOX DISTRIB. GARE KAP OD BOS",26,75.2,0]]],
+["KAMPENHOUT",["1910"],"C",50.93,4.53,65,192,192,672,55,2,0,[["BBOX DISTRIB. AVEVE KAMPENHOUT",26,13.4,0],["BBOX DISTRIB F.WOUTERSLAAN",39,59.9,0]]],
+["ZAVENTEM",["1930","1932"],"B",50.96,4.54,91,312,312,1053,108,4,0,[["BBOX DISTRIB ESSO ABD",13,5.7,0],["BBOX DISTRIB GARE ZAVENTEM",26,61.9,0],["BBOX DISTRIB GARE NOSSEGEM",26,36.6,0],["BBOX DISTRIB XIOR ALMA",26,56.7,0]]],
+["WEZEMBEEK-OPPEM",["1970"],"C",50.88,4.5,39,96,96,479,59,1,0,[["BBOX DISTRIB HOPPIN WEZ-OP",39,46.8,0]]],
+["ZEMST",["1980","1981"],"B",50.98,4.47,117,312,312,1388,104,4,0,[["BBOX DISTRIB LECOT ZEMST",26,23.2,0],["BBOX DISTRIB DE SEMSE ZEMS",39,45.8,0],["BBOX DISTRIB STATION WEERDE",26,52.8,0],["BBOX DISTRIB STATION HOFSTADE",26,69.9,0]]],
+["ANTWERPEN",["2000","2018","2020","2030","2040","2050","2060","2100","2140","2170","2180","2600","2610","2660"],"A",51.2075,4.422,1001,2120,2388,14231,3672,44,44,[["BBOX DISTRIB. XIOR GRATIEKAPEL",13,60.5,1],["BBOX DISTRIB XIOR PRINCE",13,55.5,1],["BBOX DISTRIB OPERA FIETS",26,18.6,1],["BBOX DISTRIB UA KIPDORP",26,0.0,1],["BBOX DISTRIB GRAND BAZAR SCHOENMARKT",26,49.5,1],["BBOX DISTRIB. XIOR KIPDORPVEST",26,0.0,1],["BBOX-DISTRIB UA RODESTRAAT",39,57.9,1],["BBOX DISTRIB AVA ANTWERPEN",26,60.4,1],["BBOX DISTRIB.VAN SCHOONBEKE",26,57.2,1],["BBOX DISTRIB UA MIDDELHEIM",13,39.8,1],["BBOX DISTRIB UA GROENBORGER ZIEKENH",13,21.4,1],["BBOX DISTRIB WZC HOLLEBEEK",26,20.9,1],["BBOX DISTRIB P&R LUCHTBAL",13,17.7,1],["BBOX DISTRIB P1NORTH/VOPAK ANTWERPEN",26,1.7,1],["BBOX-DISTRIB DIENSTCENTRUM LINKEROEVER",13,28.1,1],["BBOX DISTRIB WZC REGATTA",26,80.1,1],["BBOX DISTRIB BPOST ANTWERPEN STUIVENBERG",13,47.5,1],["BBOX-DISTRIB DE SEEFHOEK ANTWERPEN",13,16.1,1],["BBOX-DISTRIB KERKEVELD DEURNE",13,19.4,1],["BBOX-DISTRIB SILSBURG DEURNE",13,53.2,1],["BBOX DISTRIB LUKOIL DEURNE",26,52.0,1],["BBOX DISTRIB KRINGW. VOS",26,44.3,1],["BBOX DISTRIB GEYSBRECHT",26,55.0,1],["BBOX DISTRIB DELHAIZE DEURNE",26,68.2,1],["BBOX DISTRIB BPOST BORGERHOUT KATTENBERG",13,58.9,1],["BBOX-DISTRIB DE BOELAER BORGERHOUT",13,51.8,1],["BBOX DISTRIB AD BORGERHOUT",39,69.2,1],["BBOX DISTRIB P&R KEIZERSHK",13,36.8,1],["BBOX DISTRIB LUKOIL MERK.",13,58.9,1],["BBOX DISTRIB T KWARTELTJE",26,57.9,1],["BBOX DISTRIB BPOST MERKSEM",39,66.7,1],["BBOX DISTRIB. LUKOIL LEUGENBERG",13,44.8,1],["BBOX DISTRIB GARE EKEREN",13,33.1,1],["BBOX DISTRIB. LUKOIL ROZEMAAI",26,53.3,1],["BBOX DISTRIB PROXY BERCHEM",26,68.6,1],["BBOX DISTRIB GREENHOUSE",26,70.4,1],["BBOX DISTRIB GARE BERCHEM",52,50.6,1],["BBOX-DISTRIB OOSTERVELD ANTWERPEN",13,15.0,1],["BBOX DISTRIB UA 3 EIKEN",26,56.0,1],["BBOX DISTRIB LIDL WILRIJK",26,57.2,1],["BBOX DISTRIB. LUKOIL WILRIJK",26,47.2,1],["BBOX DISTRIB WZC GROENVELD",26,7.0,1],["BBOX DISTRIB LUKOIL",39,42.9,1],["BBOX DISTRIB BLIKFABRIEK",26,54.9,1]]],
+["BEVEREN-KRUIBEKE-ZWIJNDRECHT",["2070","9120","9130","9150"],"A",51.2009,4.3033,351,1002,1194,3584,349,14,3,[["BBOX DISTRIB GARE ZWIJNDRECHT",26,51.7,1],["BBOX DISTRIB. LUKOIL MELSELE",26,30.6,0],["BBOX DISTRIB CRF EXPRESS HAASDONK",26,54.0,0],["BBOX DISTRIB STATION SPOOR 1 BEVEREN",26,22.9,0],["BBOX DISTRIB P DONKVIJVER",26,66.0,0],["BBOX DISTRIB AC BEVEREN",26,51.0,0],["BBOX DISTRIB SPORTHAL DE PEREL",26,21.9,0],["BBOX DISTRIB PARKING AAN KERK",26,37.1,0],["BBOX DISTRIB VERHEYENPLEIN",26,29.3,1],["BBOX DISTRIB MARKTPLEIN KIELDRECHT",26,46.2,1],["BBOX DISTRIB BPOST KRUIBEKE",13,64.2,0],["BBOX DISTRIB DE WISSEL KRUIBEKE",26,61.2,0],["BBOX-DISTRIB SPORTCENTRUM DULPOP",26,24.1,0],["BBOX DISTRIB BEDRIJVENSITE TICOON",26,12.9,0]]],
+["HERENTALS",["2200"],"B",51.3,4.6917,26,78,78,221,22,1,0,[["BBOX DISTRIB. GARE HERENTALS",26,33.3,0]]],
+["HEIST-OP-DEN-BERG",["2220"],"B",51.3,4.75,26,78,78,397,42,1,0,[["BBOX DISTRIB BON AP HEIST OD BERG",26,59.4,0]]],
+["HULSHOUT",["2235"],"C",51.25,4.67,26,96,96,479,51,1,0,[["BBOX DISTRIB. KERK HOUTVENNE",26,71.6,0]]],
+["ZANDHOVEN",["2240"],"C",51.27,4.62,52,192,192,271,18,2,0,[["BBOX DISTRIB DE CIRKEL ZANDHOVEN",26,10.7,0],["BBOX DISTRIB DORPSPUNT MASSENHOVEN",26,31.6,0]]],
+["OLEN",["2250"],"C",51.31,4.56,52,192,192,517,59,2,0,[["BBOX DISTRIB. WZC ZILVERLINDE",26,49.0,0],["BBOX DISTRIB GARE OLEN",26,27.6,0]]],
+["WESTERLO",["2260"],"B",51.27,4.55,26,78,78,323,34,1,0,[["BBOX DISTRIB WZC PERWIJSHOF WESTERLO",26,48.3,0]]],
+["GROBBENDONK",["2288"],"C",51.2,4.74,13,96,96,357,123,1,0,[["BBOX DISTRIB GARE BOUWEL",13,78.3,0]]],
+["TURNHOUT",["2300"],"B",51.25,4.87,65,234,234,978,132,3,0,[["BBOX DISTRIB GARE TURNHOUT",13,69.6,0],["BBOX DISTRIB AVA TURNHOUT",26,41.6,0],["BBOX DISTRIB. DECATHL. TURNHOUT",26,65.0,0]]],
+["BEERSE",["2340"],"C",51.41,4.98,26,96,96,444,64,1,0,[["BBOX DISTRIB WZC HEIBERG BEERSE",26,63.5,0]]],
+["MOL",["2400"],"B",51.15,4.85,26,78,78,75,5,1,0,[["BBOX DISTRIB LECOT MOL",26,11.7,0]]],
+["LAAKDAL",["2430"],"B",51.18,4.82,26,78,78,461,98,1,0,[["BBOX DISTRIB CARREFOUR VORST LAAKDAL",26,60.7,0]]],
+["GEEL",["2440"],"B",51.08,4.83,65,234,234,1013,202,3,0,[["BBOX DISTRIB AVA GEEL",13,26.1,0],["BBOX DISTRIB COM SERV GEEL",26,69.1,0],["BBOX DISTRIB OPTIPHAR GEEL",26,53.5,0]]],
+["MEERHOUT",["2450"],"C",51.12,4.87,26,96,96,296,32,1,0,[["BBOX DISTRIB. KOPERBR. MEERHOUT",26,44.1,0]]],
+["KASTERLEE",["2460"],"B",51.06,4.92,78,234,234,1075,82,3,0,[["BBOX DISTRIB. CENTRUM KASTERLEE",26,44.1,0],["BBOX DISTRIB. STATION TIELEN",26,65.7,0],["BBOX DISTRIB. BIBL. LICHTAART",26,56.2,0]]],
+["DESSEL",["2480"],"C",51.1,4.72,26,96,96,605,125,1,0,[["BBOX DISTRIB. SOC. HUIS DESSEL",26,80.3,0]]],
+["LIER",["2500"],"B",51.07,4.64,26,78,78,521,111,1,0,[["BBOX DISTRIB. DE KWEKERIJ LIER",26,68.6,0]]],
+["RANST",["2520"],"C",51.09,4.57,13,96,96,199,21,1,0,[["BBOX DISTRIB DOLPHIN RANST",13,59.5,0]]],
+["BOECHOUT",["2531"],"C",51.1583,4.4983,26,96,96,479,88,1,0,[["BBOX DISTRIB. DORPSPLAATS VREMD",26,65.4,0]]],
+["HOVE",["2540"],"C",51.125,4.5,26,96,105,446,77,1,0,[["BBOX DISTRIB GARE HOVE",26,61.7,0]]],
+["KONTICH",["2550"],"B",51.07,4.52,26,78,78,241,14,1,0,[["BBOX DISTRIB OPNIEUW&CO K.",26,38.0,0]]],
+["NIJLEN",["2560"],"B",51.05,4.55,104,312,312,1549,119,4,0,[["BBOX DISTRIB GARE NIJLEN",26,65.7,0],["BBOX DISTRIB PAROCHIEZAAL BEVEL",26,51.3,0],["BBOX DISTRIB PAROCHIEZAAL OLV NIJLEN",26,71.7,0],["BBOX DISTRIB GARE KESSEL",26,50.3,0]]],
+["DUFFEL",["2570"],"B",51.06,4.62,26,78,78,544,125,1,0,[["BBOX DISTRIB GARE DUFFEL",26,70.1,0]]],
+["BERLAAR",["2590"],"C",51.09,4.68,52,192,192,771,76,2,0,[["BBOX DISTRIB CRF EXPRESS BERLAAR",26,49.7,0],["BBOX DISTRIB GARE BERLAAR",26,66.6,0]]],
+["HEMIKSEM",["2620"],"B",51.1417,4.3333,26,78,89,717,310,1,0,[["BBOX DISTRIB GARE HEMIKSEM",26,68.1,0]]],
+["SCHELLE",["2627"],"C",51.1167,4.3333,78,288,288,1215,190,3,0,[["BBOX DISTRIB HEIDE VELDEN",26,57.9,0],["BBOX DISTRIB GARE SCHELLE",26,66.9,0],["BBOX DISTRIB SPORTCOMPLEX",26,46.7,0]]],
+["MORTSEL",["2640"],"B",51.1083,4.3417,52,234,234,821,149,3,0,[["BBOX DISTRIB GARE MORTSEL-OUDE GOD",13,61.2,0],["BBOX DISTRIB MEERMINNE",13,63.2,0],["BBOX DISTRIB P CH. KONING",26,50.2,0]]],
+["MECHELEN",["2800","2801","2811","2812"],"B",51.029,4.4919,1144,2592,2592,15195,2065,54,54,[["BBOX DISTRIB GARE MECHELEN",26,25.6,1],["BBOX DISTRIB MECH. CAMPUS",26,37.0,1],["BBOX DISTRIB HOF TER BEUKEN MECHELEN",26,9.9,1],["BBOX DISTRIB AUGSTNNST HAM",13,33.8,1],["BBOX DISTRIB VAARTDIJK",13,67.6,1],["BBOX DISTRIB VILLA ZONNBLM",13,40.8,1],["BBOX DISTRIB COLOMABRUG",13,26.1,1],["BBOX DISTRIB BATTLSE BERGN",13,61.5,1],["BBOX DISTRIB VARKENSSTRAAT",13,54.2,1],["BBOX DISTRIB BEUKSTRAAT",13,56.5,1],["BBOX DISTRIB BOERENKRIJGST",13,57.5,1],["BBOX DISTRIB LAKNMAKERS 51",13,40.8,1],["BBOX DISTRIB LANGE SCHIPST",13,66.9,1],["BBOX DISTRIB PASBRUGSTRAAT",13,50.8,1],["BBOX DISTRIB BAUTERSEMSTRA",13,32.8,1],["BBOX DISTRIB HAZELDONKSTRA",13,65.9,1],["BBOX DISTRIB PAARDENKER 81",13,36.8,1],["BBOX DISTRIB PAARDENKE 220",13,45.1,1],["BBOX DISTRIB HARNASSTRAAT",13,46.8,1],["BBOX DISTRIB LAKNMAKRS",13,49.8,1],["BBOX DISTRIB LINDESTRAAT",13,63.2,1],["BBOX DISTRIB ROMMEKENSBERG",13,54.2,1],["BBOX DISTRIB PASTORIJSTR.",13,66.6,1],["BBOX DISTRIB KLEINE BAREELSTRAAT",13,61.5,1],["BBOX DISTRIB ZIEKELIEDENSTRAAT NEW",13,0.0,1],["BBOX DISTRIB ALFRED OSTSTR",26,52.3,1],["BBOX DISTRIB CAMBIO OLIVET",26,53.8,1],["BBOX DISTRIB CAMBIO STATIO",26,26.2,1],["BBOX DISTRIB KRTE RIDDRSTR",26,62.2,1],["BBOX DISTRIB PARKING KATH.",26,63.7,1],["BBOX DISTRIB RAGHENOPLEIN",26,33.8,1],["BBOX DISTRIB IEPERLEESTR",26,42.3,1],["BBOX DISTRIB OUD OEFENPL",26,39.6,1],["BBOX DISTRIB ELEKTRIC STR",26,47.0,1],["BBOX DISTRIB STUIVENBRGVRT",26,46.5,1],["BBOX DISTRIB BRUSSELSESTW",26,55.0,1],["BBOX DISTRIB KRUISBAAN",26,69.1,1],["BBOX DISTRIB R.DESSAINLN",26,64.5,1],["BBOX DISTRIB CAPUTSTEENSTR",26,60.0,1],["BBOX DISTRIB GASTHUISVELD",26,60.5,1],["BBOX DISTRIB HAMERSTRAAT",26,51.2,1],["BBOX DISTRIB LNGE HERGRCHT",26,43.5,1],["BBOX DISTRIB POSTHOORNSTR",26,57.4,1],["BBOX DISTRIB STENENMOLENST",26,43.1,1],["BBOX DISTRIB FRANS HALSVEST",26,49.8,1],["BBOX DISTRIB DAGERAADSTRAAT",26,58.2,1],["BBOX DISTRIB KOMET MECHELEN",26,62.9,1],["BBOX DISTRIB GANZENDRIES",39,67.7,1],["BBOX DISTRIB TERVUURSESTWG",39,48.8,1],["BBOX DISTRIB HEFFEN-DORP",26,59.5,1],["BBOX DISTRIB HOMBEKERKOUTE",26,27.8,1],["BBOX DISTRIB LEEST-DORP",26,52.5,1],["BBOX DISTRIB STATION MUIZEN",13,54.9,1],["BBOX DISTRIB MAGDAL MUIZEN",39,65.9,1]]],
+["BONHEIDEN",["2820"],"C",51.06,4.46,13,96,96,227,78,1,0,[["BBOX DISTRIB CRF EXPRESS RIJMENAM",13,49.8,0]]],
+["WILLEBROEK",["2830"],"B",51.07,4.4,13,78,78,207,39,1,0,[["BBOX DISTRIB BPOST WILLEBROEK",13,56.2,0]]],
+["RUMST",["2840"],"C",51.07,4.53,26,96,119,521,92,1,0,[["BBOX DISTRIB. SPORTHAL TERHAGEN",26,71.7,0]]],
+["NIEL",["2845"],"B",51.05,4.51,39,78,78,488,28,1,0,[["BBOX DISTRIB ISALA NIEL",39,51.3,0]]],
+["BOOM",["2850"],"B",51.09,4.3717,26,78,89,346,28,1,0,[["BBOX DISTRIB GARE BOOM",26,53.2,0]]],
+["SINT-KATELIJNE-WAVER",["2860"],"B",51.07,4.38,52,156,180,568,66,2,0,[["BBOX DISTRIB GARE SKWAVER",26,60.9,0],["BBOX DISTRIB SPORTCOMPLEX HEIVELD",26,23.1,0]]],
+["PUURS-SINT-AMANDS",["2870"],"B",51.08,4.28,130,390,390,2080,352,5,0,[["BBOX DISTRIB STATION PUURS",26,72.9,0],["BBOX DISTRIB VVH LIPPELO",26,29.3,0],["BBOX DISTRIB DE BARONIE OPPUURS",26,74.6,0],["BBOX DISTRIB DE IJZERGIETER RUISBROEK",26,82.1,0],["BBOX DISTRIB GEMEENTEHUIS PUURS",26,30.1,0]]],
+["BORNEM",["2880"],"B",51.05,4.34,78,234,234,1270,141,3,0,[["BBOX DISTRIB CRF MARKET BORNEM",26,64.5,0],["BBOX DISTRIB GARE BORNEM",26,56.9,0],["BBOX DISTRIB POL. BORNEM",26,67.4,0]]],
+["SCHOTEN",["2900"],"B",51.1333,4.45,26,78,78,481,118,1,0,[["BBOX DISTRIB KRINGW. VEN",26,60.7,0]]],
+["ESSEN",["2910"],"B",51.21,4.43,39,156,156,719,111,2,0,[["BBOX DISTRIB GARE ESSEN",13,64.5,0],["BBOX DISTRIB SPAR HEIKANT",26,69.4,0]]],
+["KALMTHOUT",["2920"],"B",51.23,4.4,26,156,156,524,147,2,0,[["BBOX DISTRIB GARE HEIDE",13,67.6,0],["BBOX DISTRIB GARE KALMTHOUT",13,58.5,0]]],
+["BRASSCHAAT",["2930"],"B",51.2917,4.4917,52,156,156,702,58,2,0,[["BBOX DISTRIB DONK PATIO",26,61.0,0],["BBOX DISTRIB WZC SALVE",26,46.7,0]]],
+["STABROEK",["2940"],"B",51.3333,4.3667,52,156,156,751,91,2,0,[["BBOX DISTRIB JOS HOEVENEN",26,62.0,0],["BBOX DISTRIB BEUKENLAAN STABROEK",26,48.3,0]]],
+["KAPELLEN",["2950"],"B",51.3167,4.4333,130,390,390,1980,210,5,0,[["BBOX DISTRIB PROMENADE SH",13,48.2,0],["BBOX DISTRIB GARE KAPELLEN",26,56.0,0],["BBOX DISTRIB. SPORT HOOGBOOM",26,53.7,0],["BBOX DISTRIB. SPORTHAL PUTTE",26,64.9,0],["BBOX DISTRIB P WATERTOREN",39,64.9,0]]],
+["BRECHT",["2960"],"B",51.2917,4.4917,52,156,156,143,12,2,0,[["BBOX DISTRIB GARE BRECHT",26,13.2,0],["BBOX DISTRIB DE CIRKEL BRECHT",26,8.7,0]]],
+["SCHILDE",["2970"],"B",51.27,4.44,39,78,78,467,35,1,0,[["BBOX DISTRIB SOFT & SHINE",39,48.2,0]]],
+["WUUSTWEZEL",["2990"],"B",51.31,4.46,52,78,90,735,51,1,0,[["BBOX DISTRIB HUBO WUUSTWZL",52,57.2,0]]],
+["LEUVEN",["3000","3001","3010","3018"],"A",50.87,4.7026,1092,1823,1861,17340,2526,37,37,[["BBOX DISTRIB GARE LOUVAIN",26,58.0,1],["BBOX DISTRIB P CENTER",13,63.9,1],["BBOX DISTRIB PARK DE BRUUL",13,64.5,1],["BBOX DISTRIB SINT-BARBARA",13,71.9,1],["BBOX DISTRIB ATHEN DE RING",13,58.5,1],["BBOX DISTRIB. SP. KROON LEUVEN",13,57.5,1],["BBOX DISTRIB SINTBEGGABERG",26,67.2,1],["BBOX DISTRIB TERVUURSPOORT",26,60.2,1],["BBOX DISTRIB VANDEN TYMPLE",26,72.2,1],["BBOX DISTRIB SINT-MAARTE.",26,70.4,1],["BBOX DISTRIB GRASMUSHOF",26,64.0,1],["BBOX DISTRIB RAVENSTRAAT",26,65.5,1],["BBOX DISTRIB R. DE SOMERPL",26,59.7,1],["BBOX DISTRIB ZORG LEUVEN",26,64.2,1],["BBOX DISTRIB QUINTEN METSYSPLEIN",26,71.2,1],["BBOX DISTRIB P VAARTKOM",39,60.3,1],["BBOX DISTRIB DONKERSTRAAT",39,65.9,1],["BBOX DISTRIB FONTEINSTRAAT",39,67.5,1],["BBOX DISTRIB DE WIJNPERS",39,39.2,1],["BBOX DISTRIB GROEFSTRAAT",39,57.5,1],["BBOX DISTRIB HOORNPLEIN",39,63.0,1],["BBOX DISTRIB DIRK BOUTSL.",52,53.9,1],["BBOX DISTRIB VICTOR BROOS.",52,50.5,1],["BBOX DISTRIB UBICENTER",13,23.8,1],["BBOX DISTRIB NAAMSEPOORT",26,61.2,1],["BBOX DISTRIB EGENHOVEN",26,49.5,1],["BBOX DISTRIB MATADIBUURT",26,63.7,1],["DISTRIBUTEUR KERSPELSTRAAT",26,64.9,1],["BBOX DISTRIB A STAINIERSTRAAT",26,63.0,1],["BBOX DISTRIB LE VAN ARENBERGPLEIN",26,76.1,1],["BBOX DISTRIB. LUKOIL DIESTSESTW",26,35.8,1],["BBOX DISTRIB BOVENLO",26,26.9,1],["BBOX DISTRIB EDELZANGERSLAAN",26,51.8,1],["BBOX DISTRIB. BLAUWP. KESSEL-LO",39,61.1,1],["BBOX DISTRIB REMYPLEIN",65,58.6,1],["BBOX DISTRIB DE BRON",52,53.0,1],["BBOX DISTRIB GARE WIJGMAAL",26,78.3,1]]],
+["HERENT",["3020"],"C",50.86,4.74,78,288,288,651,49,3,0,[["BBOX DISTRIB BON AP HERENT",26,20.2,0],["BBOX DISTRIB GARE HERENT",26,61.2,0],["BBOX DISTRIB GARE VELTEM",26,19.2,0]]],
+["OUD-HEVERLEE",["3050","3051","3052","3053"],"C",50.825,4.6875,65,384,384,672,69,4,0,[["BBOX DISTRIB BUSHALTE RUITERSWEG",13,65.9,0],["BBOX DISTRIB STATION ST-JORIS WEERT",26,22.2,0],["BBOX DISTRIB GEMEENTEHUIS VAALBEEK",13,29.8,0],["BBOX DISTRIB OC HAASRODE",13,61.5,0]]],
+["KORTENBERG",["3070","3071"],"B",50.83,4.58,65,234,260,1172,218,3,0,[["BBOX DISTRIB BERKENHOF",26,62.9,0],["BBOX DISTRIB GARE ERPS-KWERPS",13,72.2,0],["BBOX DISTRIB GARE KORTENBERG",26,60.5,0]]],
+["TERVUREN",["3080"],"B",50.84,4.56,26,78,78,459,86,1,0,[["BBOX DISTRIB. LUKOIL TERVUREN",26,62.4,0]]],
+["OVERIJSE",["3090"],"B",50.85,4.5,52,156,156,617,69,2,0,[["BBOX DISTRIB DEN TRAM OVE.",26,44.8,0],["BBOX DISTRIB P BEIERSHOF",26,46.8,0]]],
+["ROTSELAAR",["3110","3111"],"C",50.92,4.76,78,288,288,953,128,3,0,[["BBOX DISTRIB ROTONDE ROTSELAAR",26,48.3,0],["BBOX DISTRIB ROTONDE WERCHTER",26,60.0,0],["BBOX DISTRIB WZC/SF DE LELIE WEZEMAAL",26,29.6,0]]],
+["BEGIJNENDIJK",["3130"],"C",51.0167,4.7833,26,96,96,440,78,1,0,[["BBOX DISTRIB CRF EXPRESS BEGIJNENDIJK",26,60.5,0]]],
+["KEERBERGEN",["3140"],"C",50.96,4.7,26,96,96,599,160,1,0,[["BBOX DISTRIB KB SALLE DE SPORT",26,73.4,0]]],
+["HAACHT",["3150"],"C",50.95,4.68,52,192,192,273,15,2,0,[["BBOX DISTRIB GARE HAACHT",26,15.0,0],["BBOX DISTRIB GARE WESPELAAR-TILDONK",26,28.1,0]]],
+["BOORTMEERBEEK",["3190"],"C",50.93,4.65,52,192,192,735,51,2,0,[["BBOX DISTRIB AVABOORTMBEEK",26,46.7,0],["BBOX DISTRIB GARE BOORTMEERBEEK",26,67.7,0]]],
+["AARSCHOT",["3200"],"B",50.95,4.84,26,78,78,271,31,1,0,[["BBOX DISTRIB GARE AARSCHOT",26,40.1,0]]],
+["LUBBEEK",["3210"],"B",50.92,4.82,26,78,78,538,86,1,0,[["BBOX DISTRIB LAMBR LINDEN",26,75.6,0]]],
+["HOLSBEEK",["3221"],"C",50.9167,4.75,26,96,96,349,26,1,0,[["BBOX DISTRIB. DORP NIEUWRODE",26,54.0,0]]],
+["SCHERPENHEUVEL-ZICHEM",["3272"],"B",50.96,5.01,26,78,78,230,10,1,0,[["BBOX DISTRIB WZC VOORTBERG TESTELT",26,36.8,0]]],
+["DIEST",["3290"],"B",50.9867,5.0508,26,78,78,385,28,1,0,[["BBOX-DISTRIB GARE DIEST",26,59.7,0]]],
+["TIENEN",["3300"],"B",50.93,4.93,65,234,234,803,60,3,0,[["BBOX DISTRIB GARE TIENEN",13,29.1,0],["BBOX DISTRIB BON AP TIENEN",26,51.3,0],["BBOX DISTRIB. LECOT TIRLEMONT",26,58.4,0]]],
+["HOEGAARDEN",["3321"],"C",50.7833,4.8833,26,96,96,261,14,1,0,[["BBOX DISTRIB HOOGSTR OUTGAARDEN",26,41.3,0]]],
+["BOUTERSEM",["3370"],"C",50.86,4.82,26,96,96,250,13,1,0,[["BBOX DISTRIB GARE VERTRIJK",26,39.6,0]]],
+["LANDEN",["3400"],"C",50.8167,5.1833,52,192,192,714,59,2,0,[["BBOX DISTRIB STATION LANDEN",26,49.7,0],["BBOX DISTRIB OC WALSHOUTEM",26,59.9,0]]],
+["KORTENAKEN",["3471"],"C",50.92,5.07,26,96,96,177,6,1,0,[["BBOX DISTRIB KERKPHOELEDEN",26,28.6,0]]],
+["HASSELT",["3500","3511","3720"],"A",50.9169,5.3193,364,672,685,3409,274,14,14,[["BBOX DISTRIB BR HASSELT",13,61.9,1],["BBOX DISTRIB GARE HASSELT",26,37.6,1],["BBOX DISTRIB CORDA CAMPUS5",26,32.6,1],["BBOX DISTRIB PLAZA H",26,26.2,1],["BBOX DISTRIB XIOR HASSELT",26,11.0,1],["BBOX DISTRIB AVEVE HASSELT",26,27.1,1],["BBOX DISTRIB WZC GAERVELD",26,62.9,1],["BBOX DISTRIB QUARTIER BLEU",26,24.2,1],["BBOX DISTRIB LUKOIL HASS.",39,48.6,1],["BBOX DISTRIB PARK H HASSELT",26,12.2,1],["BBOX DISTRIB AVA HASSELT",26,35.3,1],["BBOX DISTRIB.KERKPL KORTESSEM",26,54.9,1],["BBOX DISTRIB T BELHAMELTJE GUIGOVEN",26,42.6,1],["BBOX DISTRIB KERK VLIERMAAL",26,53.7,1]]],
+["LUMMEN",["3560"],"C",50.96,5.42,13,96,96,234,58,1,0,[["BBOX DISTRIB BPOST LUMMEN",13,58.9,0]]],
+["ALKEN",["3570"],"C",50.97,5.46,52,192,192,585,24,2,0,[["BBOX DISTRIB GARE ALKEN",26,42.1,0],["BBOX DISTRIB. TERKOEST ALKEN",26,51.7,0]]],
+["BERINGEN",["3580","3582","3583"],"B",51.02,5.335,78,234,234,1210,238,3,0,[["BBOX DISTRIB BIB BERINGEN",26,71.6,0],["BBOX DISTRIB BE-MINE BERIN",26,68.1,0],["BBOX DISTRIB. LUKOIL BERINGEN",26,22.9,0]]],
+["DIEPENBEEK",["3590"],"B",51.05,5.35,52,156,156,614,44,2,0,[["BBOX DISTRIB. WZCTERROOIERHEIDE",26,48.2,0],["BBOX DISTRIB GARE DIEPENBEEK",26,47.2,0]]],
+["GENK",["3600"],"A",51.06,5.5,65,144,144,685,65,3,3,[["BBOX DISTRIB LUKOIL GENK",13,31.4,1],["BBOX DISTRIB GARE BOKRIJK",13,33.4,1],["BBOX DISTRIB LUKOIL WATER.",39,47.5,1]]],
+["LANAKEN",["3620"],"B",50.92,5.6,39,78,78,497,29,1,0,[["BBOX DISTRIB. LUKOIL LANAKEN",39,52.2,0]]],
+["DILSEN-STOKKEM",["3650"],"B",51.05,5.3,26,78,78,177,8,1,0,[["BBOX DISTRIB Q8 DILSEN",26,28.3,0]]],
+["MAASEIK",["3680"],"B",50.98,5.56,13,78,84,193,28,1,0,[["BBOX DISTRIB BPOST MAASEIK",13,55.2,0]]],
+["ZUTENDAAL",["3690"],"C",50.95,5.52,52,192,192,742,62,2,0,[["BBOX DISTRIB DE WEVEL ZUTENDAAL",26,63.9,0],["BBOX DISTRIB ADMIN CENTRUM ZUTENDAAL",26,49.8,0]]],
+["TONGEREN-BORGLOON",["3700"],"B",50.82,5.52,26,78,78,231,17,1,0,[["BBOX DISTRIB PRAETORIUM",26,35.8,0]]],
+["BILZEN-HOESELT",["3730","3740"],"C",50.84,5.5,39,174,174,433,38,2,0,[["BBOX DISTRIB. LUKOIL HOESELT",13,47.8,0],["BBOX DISTRIB GARE BILZEN",26,42.1,0]]],
+["RIEMST",["3770"],"B",50.81,5.56,26,78,78,163,14,1,0,[["BBOX DISTRIB. DRANKH EPDING",26,24.9,0]]],
+["SINT-TRUIDEN",["3800","3806"],"B",50.8,5.18,91,312,312,1293,110,4,0,[["BBOX DISTRIB GARE ST-TROND",13,58.5,0],["BBOX DISTRIB TER BIEST CA.",26,52.8,0],["BBOX DISTRIB WARA ST-TRUIDEN",26,52.7,0],["BBOX DISTRIB SPAREXPR VELM",26,63.0,0]]],
+["NIEUWERKERKEN",["3850"],"C",50.81,5.35,26,96,96,532,130,1,0,[["BBOX DISTRIB. SOCIAAL HUIS NWRK",26,67.2,0]]],
+["HEERS",["3870"],"C",50.92,5.23,78,192,192,630,38,2,0,[["BBOX DISTRIB CHIRO VECHMAAL",26,30.8,0],["BBOX DISTRIB. DE BAMMERD HEERS",52,34.1,0]]],
+["PELT",["3910"],"C",51.1167,5.25,65,288,288,1120,190,3,0,[["BBOX DISTRIB WARA PELT",13,64.2,0],["BBOX DISTRIB GARE NEERPELT",26,59.9,0],["BBOX DISTRIB SYNTRA PELT",26,63.5,0]]],
+["LOMMEL",["3920"],"B",51.12,5.32,26,78,78,269,15,1,0,[["BBOX DISTRIB GARE LOMMEL",26,42.5,0]]],
+["HAMONT-ACHEL",["3930"],"C",51.08,5.2,13,96,96,153,13,1,0,[["BBOX DISTRIB BPOST HAMONT STADSWAAG",13,46.8,0]]],
+["HECHTEL-EKSEL",["3940"],"C",51.1,5.08,26,96,96,402,38,1,0,[["BBOX DISTRIB HE KRUISPUNT",26,60.9,0]]],
+["BOCHOLT",["3950"],"C",51.08,5.16,26,96,96,265,16,1,0,[["BBOX DISTRIB. SPORTHAL BOCHOLT",26,41.6,0]]],
+["BREE",["3960"],"B",51.08,5.18,52,156,156,274,19,2,0,[["BBOX DISTRIB LECOT BREE",26,10.0,0],["BBOX DISTRIB. DORPSPL. TONGERLO",26,32.6,0]]],
+["LEOPOLDSBURG",["3970"],"C",51.14,5.18,26,96,96,248,13,1,0,[["BBOX DISTRIB GARE LEOPOLDSBURG",26,39.3,0]]],
+["PEER",["3990"],"B",51.06,5.08,26,78,78,284,19,1,0,[["BBOX DISTRIB HOPPINPUNT WIJCHMAAL",26,44.3,0]]],
+["LIÈGE",["4000","4020","4030","4031"],"A",50.6181,5.6074,286,768,774,2315,269,16,16,[["BBOX DISTRIB. TRAFIC BURENVILLE",26,51.3,1],["BBOX DISTRIB. SIRÈNE LIÈGE",13,21.1,1],["BBOX DISTRIB. SAUVENIÈRE LIÈGE",13,31.1,1],["BBOX DISTRIB.PL DÉPORTÉS LIÈGE",13,35.1,1],["BBOX DISTRIB BPOST JUPILLE-SUR-MEUSE",13,36.4,1],["BBOX DISTRIB LUKOIL LIÈGE",26,25.2,1],["BBOX DISTRIB. H DE DINANT LIÈGE",13,21.1,1],["BBOX DISTRIB PISCINE D OUTREMEUS LIÈGE",13,44.8,1],["BBOX DISTRIB. QUAI CHURCHILL",13,46.2,1],["BBOX DISTRIB CONSTITUTION LIÈGE",13,31.4,1],["BBOX DISTRIB.PL CONGRÈS LIÈGE",13,50.5,1],["BBOX DISTRIB GRANDE-BÊCHE LIÈGE",13,17.7,1],["BBOX DISTRIB. TRAFIC GRIVEGNÉE",26,22.6,1],["BBOX DISTRIB MARKET GRIVEG",26,22.4,1],["BBOX DISTRIB LUKOILANGLEUR",26,40.8,1],["BBOX DISTRIB GARE ANGLEUR",26,12.0,1]]],
+["HERSTAL",["4040","4041","4042"],"B",50.65,5.56,65,312,312,526,59,4,0,[["BBOX DISTRIB BPOST HERSTAL CENTRE",13,27.8,0],["BBOX DISTRIB LUKOILHERSTAL",26,40.0,0],["BBOX DISTRIB GARE MILMORT",13,34.8,0],["BBOX DISTRIB GARE LIERS",13,13.7,0]]],
+["CHAUDFONTAINE",["4050"],"B",50.58,5.57,26,78,78,77,5,1,0,[["BBOX DISTRIB GARE CHAUDFONTAINE",26,12.0,0]]],
+["SERAING",["4101"],"A",50.59,5.52,26,48,95,466,76,1,1,[["BBOX DISTRIB INTER JEMEPPE",26,65.2,1]]],
+["ESNEUX",["4130"],"C",50.54,5.52,26,96,96,170,16,1,0,[["BBOX DISTRIB GARE ESNEUX",26,25.8,0]]],
+["HAMOIR",["4180"],"C",50.43,5.53,13,96,96,112,8,1,0,[["BBOX DISTRIB GARE HAMOIR",13,34.8,0]]],
+["WAREMME",["4300"],"C",50.54,5.27,26,96,96,237,3,1,0,[["BBOX DISTRIB GARE WAREMME",26,39.1,0]]],
+["REMICOURT",["4350"],"C",50.57,5.31,26,96,113,274,25,1,0,[["BBOX DISTRIB GARE REMICOURT",26,41.6,0]]],
+["CRISNÉE",["4367"],"C",50.6,5.42,26,96,96,274,20,1,0,[["BBOX DISTRIB BOULEVARD DES CAPUCINES",26,42.5,0]]],
+["FLÉMALLE",["4400"],"B",50.61,5.5,13,78,78,89,11,1,0,[["BBOX DISTRIB GARE FLEMALLE-HAUTE",13,26.1,0]]],
+["SAINT-NICOLAS",["4420"],"B",50.63,5.62,13,78,90,258,73,1,0,[["BBOX DISTRIB BPOST ST-NICOLAS",13,61.9,0]]],
+["ANS",["4430"],"B",50.66,5.64,13,78,78,249,59,1,0,[["BBOX DISTRIB GARE ANS",13,63.5,0]]],
+["ENGIS",["4480"],"C",50.57,5.42,26,96,96,163,14,1,0,[["BBOX DISTRIB GARE ENGIS",26,24.9,0]]],
+["HUY",["4500"],"B",50.5167,5.2333,39,156,156,304,73,2,0,[["BBOX DISTRIB GARE HUY",13,22.4,0],["BBOX DISTRIB CHR HUY",26,27.4,0]]],
+["WANZE",["4520"],"B",50.53,5.2,26,78,78,361,105,1,0,[["BBOX DISTRIB AVEVE WANZE",26,42.8,0]]],
+["AMAY",["4540"],"B",50.48,5.28,13,78,78,116,9,1,0,[["BBOX DISTRIB GARE AMAY",13,35.8,0]]],
+["MODAVE",["4577"],"C",50.42,5.22,26,96,96,191,13,1,0,[["BBOX DISTRIB TOTAL MODAVE STREE",26,29.8,0]]],
+["BLÉGNY",["4671"],"B",50.71,5.72,13,78,78,260,71,1,0,[["BBOX DISTRIB VELOBAC SAIVE",13,63.2,0]]],
+["BASSENGE",["4690"],"C",50.75,5.65,13,96,96,114,64,1,0,[["BBOX DISTRIB BPOST BASSENGE",13,16.7,0]]],
+["EUPEN",["4700","4701"],"C",50.6266,6.0267,52,384,384,390,23,4,0,[["BBOX DISTRIB GARE EUPEN",13,12.0,0],["BBOX DISTRIB JUDENSTRASSE EUPEN",13,50.5,0],["BBOX DISTRIB SIMARSTRASSE EUPEN",13,24.1,0],["BBOX DISTRIB AACHENER EUPEN",13,36.1,0]]],
+["VERVIERS",["4800"],"B",50.5906,5.8642,78,312,312,456,65,4,0,[["BBOX DISTRIB GARE VERVIERS",26,20.4,0],["BBOX DISTRIB LUKOIL ENSIVAL",26,4.7,0],["BBOX DISTRIB SIMON LOBET VERVIERS",13,44.5,0],["BBOX DISTRIB JULES SPINHAYER VERVIERS",13,36.1,0]]],
+["DISON",["4821"],"B",50.58,5.85,26,78,78,176,12,1,0,[["BBOX DISTRIB PROXYANDRIMNT",26,27.4,0]]],
+["WELKENRAEDT",["4840"],"C",50.57,5.89,13,96,96,283,69,1,0,[["BBOX DISTRIB GARE WELKENRAEDT",13,71.6,0]]],
+["JALHAY",["4845"],"C",50.6,5.93,13,96,96,197,30,1,0,[["BBOX DISTRIB BPOST SART-LEZ-SPA",13,55.9,0]]],
+["PEPINSTER",["4860"],"C",50.56,5.92,26,96,96,299,26,1,0,[["BBOX DISTRIB BPOST PEPINST",26,45.6,0]]],
+["TROOZ",["4870"],"C",50.53,5.95,13,96,96,76,4,1,0,[["BBOX DISTRIB BPOST TROOZ",13,24.1,0]]],
+["SPA",["4900"],"C",50.4833,5.8667,26,96,96,201,8,1,0,[["BBOX DISTRIB GARE SPA",26,32.3,0]]],
+["MALMEDY",["4960"],"C",50.42,5.97,13,96,96,120,12,1,0,[["BBOX DISTRIB LUKOIL MALMEDY",13,36.1,0]]],
+["NAMUR",["5000","5100"],"A",50.4485,4.9688,78,288,288,916,104,6,6,[["BBOX DISTRIB RUE BRUNO",13,16.7,1],["BBOX DISTRIB. BASSE MARCEL NAMUR",13,37.8,1],["BBOX DISTRIB R DE LETOILE",13,48.8,1],["BBOX DISTRIB PL. JOS-CHAR",13,46.2,1],["BBOX DISTRIB RUE MOTTIAUX",13,63.5,1],["BBOX DISTRIB GARE JAMBES",13,58.5,1]]],
+["GEMBLOUX",["5030"],"B",50.5,4.9,39,156,156,315,22,2,0,[["BBOX DISTRIB GARE GEMBLOUX",13,32.4,0],["BBOX DISTRIB QUARTIER ENÉE",26,32.8,0]]],
+["SAMBREVILLE",["5060"],"B",50.42,4.88,52,234,234,314,16,3,0,[["BBOX DISTRIB GARE TAMINES",13,30.4,0],["BBOX DISTRIB BPOST AUVELAIS",13,27.1,0],["BBOX DISTRIB GARE DE AUVELAIS",26,21.1,0]]],
+["PROFONDEVILLE",["5170"],"C",50.4,4.75,26,96,96,73,7,1,0,[["BBOX DISTRIB GARE LUSTIN",26,11.0,0]]],
+["JEMEPPE-SUR-SAMBRE",["5190"],"B",50.46,4.7,13,78,78,159,116,1,0,[["BBOX DISTRIB BPOST JEMEPPE-SUR-SAMBRE",13,14.4,0]]],
+["ANDENNE",["5300"],"B",50.4833,5.1,65,390,390,532,58,5,0,[["BBOX DISTRIB GARE ANDENNE",13,46.8,0],["BBOX DISTRIB RUE CHARLES LAHAYE ANDENNE",13,25.1,0],["BBOX DISTRIB PARKING ANDENNE ARENA",13,27.8,0],["BBOX DISTRIB POLYCLINIQUE ANDENNE",13,36.4,0],["BBOX DISTRIB CENTRE CULTUREL ANDENNE",13,22.4,0]]],
+["EGHEZÉE",["5310"],"B",50.53,5.12,13,78,78,73,10,1,0,[["BBOX DISTRIB BPOST EGHEZEE",13,21.1,0]]],
+["DINANT",["5500"],"C",50.2611,4.9122,78,384,384,426,53,4,0,[["BBOX-DISTRIB BPOST DINANT GEMECHENNE",13,34.4,0],["BBOX DISTRIB ANSEREMME PIED DU CHARREAU",13,47.8,0],["BBOX DISTRIB PL. CARDINAL MERCIER DINANT",26,12.2,0],["BBOX DISTRIB GARE DINANT",26,9.0,0]]],
+["BEAURAING",["5570"],"C",50.18,5.08,26,96,96,43,6,1,0,[["BBOX DISTRIB GARE BEAURAING",26,6.2,0]]],
+["ROCHEFORT",["5580"],"C",50.22,5.12,39,192,192,226,17,2,0,[["BBOX DISTRIB GARE ROCH-JEMELLE",13,9.7,0],["BBOX DISTRIB SPAR ROCHEFORT",26,30.1,0]]],
+["CINEY",["5590"],"B",50.25,5.15,13,78,111,237,59,1,0,[["BBOX DISTRIB BPOST CINEY",13,59.5,0]]],
+["METTET",["5640"],"B",50.25,4.57,26,78,78,383,54,1,0,[["BBOX DISTRIB AD DELHAIZE METTET",26,55.0,0]]],
+["WALCOURT",["5650"],"B",50.28,4.55,26,78,78,97,14,1,0,[["BBOX DISTRIB GARE WALCOURT",26,13.9,0]]],
+["COUVIN",["5660"],"C",50.1,4.52,52,192,192,218,15,2,0,[["BBOX DISTRIB LA COUVINOISE",26,26.9,0],["BBOX DISTRIB GARE COUVIN",26,7.0,0]]],
+["CHARLEROI",["6030","6041","6061"],"A",50.3733,4.47,52,144,144,334,35,3,3,[["BBOX DISTRIB. GARE MARCHIENNE",13,12.4,1],["BBOX DISTRIB BPOST GOSSELIES",13,27.8,1],["BBOX DISTRIB MEDIA STORE MONT-SUR-SAMBRE",26,29.9,1]]],
+["FONTAINE-L\'EVÊQUE",["6140"],"B",50.48,4.4,26,78,124,362,54,1,0,[["BBOX DISTRIB TOM CO FONTAINE L EVEQUE",26,51.5,0]]],
+["COURCELLES",["6180"],"B",50.42,4.3,26,78,78,376,26,1,0,[["BBOX DISTRIB. AVEVE COURCELLES",26,58.5,0]]],
+["CHÂTELET",["6200"],"B",50.43,4.56,26,78,78,40,3,1,0,[["BBOX DISTRIB GARE CHÂTELET",26,6.2,0]]],
+["FLEURUS",["6220"],"B",50.32,4.35,13,78,78,133,20,1,0,[["BBOX DISTRIB GARE FLEURUS",13,37.8,0]]],
+["PONT-À-CELLES",["6238"],"B",50.35,4.37,13,78,78,187,37,1,0,[["BBOX DISTRIB GARE LUTTRE",13,50.2,0]]],
+["GERPINNES",["6280"],"C",50.23,4.25,13,96,118,224,91,1,0,[["BBOX DISTRIB BPOST GERPINNES CENTRE",13,44.5,0]]],
+["LOBBES",["6540"],"C",50.3,4.1,26,96,96,119,4,1,0,[["BBOX DISTRIB GARE LOBBES",26,19.2,0]]],
+["ERQUELINNES",["6560"],"C",50.25,4.08,26,96,96,137,11,1,0,[["BBOX DISTRIB GARE ERQUELINNES",26,21.1,0]]],
+["MOMIGNIES",["6590"],"C",50.07,4.2,13,96,96,185,13,1,0,[["BBOX DISTRIB SPAR MOMIGNI",13,57.5,0]]],
+["ARLON",["6700"],"B",49.6833,5.8167,52,156,156,421,77,2,0,[["BBOX DISTRIB GARE ARLON",13,57.9,0],["BBOX DISTRIB BPOST RUE DE LA MOSELLE",39,19.1,0]]],
+["HABAY",["6720","6724"],"C",49.65,5.75,39,192,192,327,47,2,0,[["BBOX DISTRIB GARE HABAY",26,18.4,0],["BBOX DISTRIB GARE MARBEHAN",13,56.9,0]]],
+["VIRTON",["6762"],"C",49.57,5.53,26,96,96,137,14,1,0,[["BBOX DISTRIB GARE VIRTON",26,20.6,0]]],
+["AUBANGE",["6791"],"B",49.57,5.78,39,156,156,423,28,2,0,[["BBOX DISTRIB GARE D\'ATHUS",13,48.8,0],["BBOX DISTRIB GARE AUBANGE",26,41.6,0]]],
+["LIBRAMONT-CHEVIGNY",["6800"],"C",50.0,5.33,26,192,192,181,17,2,0,[["BBOX DISTRIB. GARE LIBRAMONT",13,42.8,0],["BBOX DISTRIB BIOCAP LIBRAMONT",13,12.0,0]]],
+["FLORENVILLE",["6820"],"C",49.88,5.3,13,96,96,76,6,1,0,[["BBOX DISTRIB. CRF FLORENVILLE",13,23.4,0]]],
+["NEUFCHÂTEAU",["6840"],"C",49.85,5.37,26,96,96,33,14,1,0,[["BBOX DISTRIB GARE NEUFCHATEAU",26,3.2,0]]],
+["PALISEUL",["6850"],"C",49.7939,5.0667,26,96,96,114,20,1,0,[["BBOX DISTRIB GARE PALISEUL",26,15.7,0]]],
+["BERTRIX",["6880"],"C",49.75,5.17,26,96,96,55,5,1,0,[["BBOX DISTRIB GARE BERTRIX",26,8.4,0]]],
+["MARCHE-EN-FAMENNE",["6900"],"C",49.92,5.27,65,288,288,349,33,3,0,[["BBOX DISTRIB MARKET MARCHE",26,23.4,0],["BBOX DISTRIB GARE DE MARLOIE",13,23.1,0],["BBOX DISTRIB GARE MARCHE-EN-FAMENNE",26,17.9,0]]],
+["DURBUY",["6940","6941"],"C",50.34,5.51,65,384,384,189,10,4,0,[["BBOX DISTRIB GARE BARVAUX",26,5.5,0],["BBOX DISTRIB PISCINE BOHON",13,2.3,0],["BBOX DISTRIB LA LAITERIE TOHOGNE",13,28.4,0],["BBOX DISTRIB MAISON DE VILLAGE HEYD",13,18.1,0]]],
+["HOTTON",["6990"],"C",50.23,5.52,26,96,96,47,3,1,0,[["BBOX DISTRIB GARE MELREUX-HOTTON",26,7.4,0]]],
+["MONS",["7000","7012","7022"],"A",50.4349,3.9571,182,480,515,1650,206,10,10,[["BBOX DISTRIB PÊCHERIE",13,54.5,1],["BBOX DISTRIB RUE DU RIVAGE",13,49.8,1],["BBOX DISTRIB R. DES CACHES",13,46.8,1],["BBOX DISTRIB RUE DES SARS",13,45.1,1],["BBOX DISTRIB LOUIS DELHAIZE MONS",26,37.5,1],["BBOX DISTRIB GOUVERNEMENT",13,30.8,1],["BBOX DISTRIB GR. PRÉS MONS",26,19.2,1],["BBOX DISTRIB. LUKOIL MONS",26,17.6,1],["BBOX DISTRIB GARE JEMAPPES",26,25.6,1],["BBOX DISTRIB BPOST HYON CENTRE",13,56.2,1]]],
+["JURBISE",["7050"],"C",50.48,4.0,13,96,96,161,35,1,0,[["BBOX DISTRIB GARE JURBISE",13,42.1,0]]],
+["SOIGNIES",["7060"],"B",50.5,3.92,26,156,156,213,21,2,0,[["BBOX DISTRIB GARE SOIGNIES",13,43.8,0],["BBOX DISTRIB AVIA SOIGNIES",13,20.4,0]]],
+["BRAINE-LE-COMTE",["7090"],"B",50.42,3.87,52,156,156,443,38,2,0,[["BBOX-DISTRIB GARE BRAINE COMTE",26,44.6,0],["BBOX DISTRIB GARE HENNUY.",26,23.1,0]]],
+["LA LOUVIÈRE",["7100","7110"],"A",50.44,3.8234,52,192,223,535,63,4,4,[["BBOX DISTRIB BPOST HAINE-ST-PIERRE",13,45.5,1],["BBOX DISTRIB BPOST LA LOUVIÈRE",13,35.4,1],["BBOX DISTRIB. GARE LA LOUVIÈRE",13,25.1,1],["BBOX DISTRIB BPOST HOUDENG",13,51.8,1]]],
+["BINCHE",["7130","7131"],"B",50.39,3.75,52,156,183,525,34,2,0,[["BBOX DISTRIB GARE BINCHE",26,39.3,0],["BBOX DISTRIB TRAFIC BINCHE",26,42.8,0]]],
+["MANAGE",["7170"],"B",50.32,3.8,13,78,78,85,7,1,0,[["BBOX DISTRIB BPOST MANAGE",13,26.1,0]]],
+["BOUSSU",["7300"],"B",50.42,3.85,13,78,78,114,5,1,0,[["BBOX DISTRIB BPOST BOUSSU",13,36.4,0]]],
+["BERNISSART",["7321"],"C",50.47,3.65,26,96,96,254,27,1,0,[["BBOX DISTRIB GARE BLATON",26,38.0,0]]],
+["SAINT-GHISLAIN",["7330"],"B",50.35,3.72,39,156,156,382,36,2,0,[["BBOX DISTRIB. GARE ST-GHISLAIN",13,16.4,0],["BBOX DISTRIB. CRF ST-GHISLAIN",26,49.7,0]]],
+["COLFONTAINE",["7340"],"B",50.38,3.65,13,78,78,91,12,1,0,[["BBOX DISTRIB BPOST WASMES",13,26.4,0]]],
+["QUIÉVRAIN",["7380"],"C",50.32,3.75,26,96,96,97,8,1,0,[["BBOX DISTRIB GARE QUIÉVRAIN",26,14.9,0]]],
+["TOURNAI",["7500"],"B",50.6056,3.3897,78,234,234,428,23,3,0,[["BBOX DISTRIB CHWAPI UNION",26,49.7,0],["BBOX DISTRIB GARE TOURNAI",26,8.2,0],["BBOX DISTRIB LECOT TOURNAI",26,9.9,0]]],
+["ANTOING",["7640"],"C",50.48,3.4,26,96,96,171,8,1,0,[["BBOX DISTRIB GARE ANTOING",26,27.3,0]]],
+["MOESKROEN",["7700","7712"],"A",50.7366,3.295,91,192,204,568,40,4,4,[["BBOX DISTRIB GARE MOUSCRON",13,39.5,1],["BBOX DISTRIB SUPERJET",26,12.4,1],["BBOX DISTRIB BPOST MOUSCRON CENTRE",26,30.4,1],["BBOX DISTRIB GARE HERSEAUX",26,25.8,1]]],
+["ATH",["7800"],"B",50.6333,3.7833,26,78,78,249,8,1,0,[["BBOX DISTRIB GARE ATH",26,40.3,0]]],
+["SILLY",["7830"],"C",50.64,3.82,13,96,96,222,43,1,0,[["BBOX DISTRIB GARE SILLY",13,59.9,0]]],
+["EDINGEN",["7850"],"C",50.68,3.82,26,96,96,322,32,1,0,[["BBOX DISTRIB GARE ENGHIEN",26,48.5,0]]],
+["LESSINES",["7860"],"B",50.66,3.75,13,78,78,174,33,1,0,[["BBOX DISTRIB GARE LESSINES",13,47.2,0]]],
+["LENS",["7870"],"C",50.63,3.72,26,96,96,144,15,1,0,[["BBOX DISTRIB GARE LENS",26,21.6,0]]],
+["LEUZE-EN-HAINAUT",["7900"],"C",50.61,3.58,13,96,96,105,5,1,0,[["BBOX DISTRIB GARE LEUZE",13,33.4,0]]],
+["BRUGGE",["8000","8200","8310","8380"],"A",51.2348,3.2037,299,816,816,3907,590,17,17,[["BBOX DISTRIB BPOST BRUGGE",13,54.2,1],["BBOX DISTRIB STOER HUUS",13,60.9,1],["BBOX DISTRIB RIJKEPIJNDERS",13,58.5,1],["BBOX DISTRIB BILKSKE",13,66.2,1],["BBOX DISTRIB ASTRID PARK",13,66.9,1],["BBOX DISTRIB ZILVERSTRAAT",13,60.9,1],["BBOX DISTRIB VELOP T ZAND",13,25.8,1],["BBOX DISTRIB ZONNEKEMEERS",13,35.8,1],["BBOX DISTRIB JAKOB PARK",13,54.5,1],["BBOX DISTRIB SNAGGAARDSTRAAT",13,48.2,1],["BBOX DISTRIB NIKOLAAS GOMBERTSTRAAT",13,23.8,1],["BBOX DISTRIB LAGO BRUGGE",26,53.8,1],["BBOX DISTRIB KRINGWINKEL A",26,39.0,1],["BBOX DISTRIB WAGGELWATER BPOST",26,15.6,1],["BBOX DISTRIB KRINGWINKEL K",26,48.8,1],["BBOX DISTRIB. LUKOIL ASSEBROEK",26,60.7,1],["BBOX DISTRIB KRINGW T RAD ZEEBRUGGE",26,59.0,1]]],
+["ZEDELGEM",["8210"],"B",51.16,3.12,26,78,78,372,39,1,0,[["BBOX DISTRIB LIDL ZEDELGEM",26,55.7,0]]],
+["KNOKKE-HEIST",["8300","8301"],"B",51.345,3.27,143,390,390,1394,86,5,0,[["BBOX DISTRIB ESSO KNOKKE",13,29.4,0],["BBOX DISTRIB GARE KNOKKE",13,36.4,0],["BBOX DISTRIB BPOST KNOKKE",65,46.5,0],["BBOX DISTRIB KRINGWINKEL H",26,38.1,0],["BBOX DISTRIB GARE DUINBERGEN",26,31.4,0]]],
+["DAMME",["8340"],"C",51.28,3.35,26,96,96,131,10,1,0,[["BBOX DISTRIB DELHAIZE SIJSELE",26,20.2,0]]],
+["BLANKENBERGE",["8370"],"C",51.3122,3.1328,26,96,96,367,94,1,0,[["BBOX DISTRIB. GARE BLANKENBERGE",26,45.6,0]]],
+["OOSTENDE",["8400"],"A",51.2304,2.9213,143,288,290,1332,158,6,6,[["BBOX DISTRIB T OOSTENDS GENOT",13,53.2,1],["BBOX DISTRIB SHELL OSTEND.",26,20.6,1],["BBOX DISTRIB INDIGO KON.",26,41.5,1],["BBOX DISTRIB CARREF OPEX",26,60.5,1],["BBOX DISTRIB AVA OOSTENDE",26,25.4,1],["BBOX DISTRIB. SHOPONTHAAL",26,21.7,1]]],
+["DE HAAN",["8420"],"C",51.17,2.9,13,96,96,255,69,1,0,[["BBOX DISTRIB BPOST DE HAAN",13,62.2,0]]],
+["MIDDELKERKE",["8430"],"B",51.2,2.97,26,78,78,268,16,1,0,[["BBOX DISTRIB.LOKOMAAT MIDDELK",26,42.1,0]]],
+["BREDENE",["8450"],"B",51.15,2.92,65,156,156,1057,171,2,0,[["BBOX DISTRIB STAD VERSLUYS",26,40.6,0],["BBOX DISTRIB CREATUUR BRED",39,71.7,0]]],
+["OUDENBURG",["8460"],"C",51.13,2.95,13,96,96,298,120,1,0,[["BBOX DISTRIB BPOST OUDENBURG",13,59.5,0]]],
+["JABBEKE",["8490"],"B",51.1,3.0,26,78,78,407,30,1,0,[["BBOX DISTRIB AD DELHAIZE VARSENARE",26,63.0,0]]],
+["KORTRIJK",["8500","8501"],"A",50.8271,3.2646,117,240,242,1750,342,5,5,[["BBOX DISTRIB SPAR KORTRIJK",26,62.2,1],["BBOX DISTRIB AUTOMATENSHOP AUTOMATIQUE",26,50.0,1],["BBOX DISTRIB LANDMARCK KORTRIJK",26,31.3,1],["BBOX DISTRIB FIETSKOT KORTRIJK",13,59.2,1],["BBOX DISTRIB DBH DEWULF",26,62.4,1]]],
+["HARELBEKE",["8530"],"B",50.82,3.18,13,78,78,193,24,1,0,[["BBOX DISTRIB. GARE HARELBEKE",13,56.5,0]]],
+["DEERLIJK",["8540"],"C",50.8,3.15,39,96,96,614,84,1,0,[["BBOX DISTRIB P MIROIR DEERLIJK",39,59.1,0]]],
+["WEVELGEM",["8560"],"B",50.85,3.32,104,234,352,1724,174,3,0,[["BBOX DISTRIB DE LEEUW MOORSELE",26,40.0,0],["BBOX-DISTRIB AVEVE WEVELGEM",39,64.3,0],["BBOX DISTRIB SPAR WEVELGEM",39,81.8,0]]],
+["ANZEGEM",["8570"],"B",50.83,3.32,52,156,156,506,31,2,0,[["BBOX DISTRIB. EXPERT ANZEGEM",26,41.1,0],["BBOX DISTRIB DELHAIZE ANZEGEM",26,38.3,0]]],
+["AVELGEM",["8580"],"C",50.85,3.38,26,96,118,445,45,1,0,[["BBOX DISTRIB BON AP AVELGEM",26,66.9,0]]],
+["DIKSMUIDE",["8600"],"C",51.08,2.88,13,96,96,255,40,1,0,[["BBOX DISTRIB. GARE DIKSMUIDE",13,71.9,0]]],
+["VEURNE",["8630"],"C",51.1,2.83,39,96,96,868,204,1,0,[["BBOX DISTRIB VEURNE BERKENLAAN",39,74.0,0]]],
+["VLETEREN",["8640"],"C",51.03,2.82,26,96,96,195,16,1,0,[["BBOX DISTRIB MABERRY VLETEREN",26,29.9,0]]],
+["HOUTHULST",["8650"],"C",51.05,2.83,39,96,96,463,17,1,0,[["BBOX DISTRIB. FOODSTORE MERKEM",39,49.7,0]]],
+["DE PANNE",["8660"],"C",51.1,2.8,13,96,96,273,102,1,0,[["BBOX DISTRIB GARE DE PANNE",13,57.2,0]]],
+["KOKSIJDE",["8670"],"B",51.05,2.73,26,78,78,262,41,1,0,[["BBOX DISTRIB ARMONEA WZC NOORDDUIN",26,37.0,0]]],
+["TIELT",["8700","8760"],"B",50.9792,3.3034,78,330,330,677,110,4,0,[["BBOX DISTRIB GARE TIELT",13,56.9,0],["BBOX DISTRIB LECOT TIELT",26,19.9,0],["BBOX DISTRIB BYCINDY TIELT",26,16.4,0],["BBOX DISTRIB VERSPUNT MEULEBEKE",13,60.2,0]]],
+["DENTERGEM",["8720"],"C",51.01,3.27,26,96,96,435,28,1,0,[["BBOX DISTRIB PROXY WAKKEN",26,68.1,0]]],
+["BEERNEM",["8730"],"B",50.98,3.28,26,78,78,299,35,1,0,[["BBOX DISTRIB AUTOSTRADE NV",26,44.1,0]]],
+["INGELMUNSTER",["8770"],"C",50.88,3.3,52,192,192,588,42,2,0,[["BBOX DISTRIB SHARKS CARWAS",26,31.8,0],["BBOX DISTRIB. GARE INGELMUNSTER",26,59.5,0]]],
+["WAREGEM",["8790","8793"],"B",50.88,3.38,91,312,312,731,41,4,0,[["BBOX DISTRIB GARE WAREGEM",13,55.9,0],["BBOX DISTRIB BIEZEBOS WAR.",26,35.8,0],["BBOX DISTRIB BEL&BO WAREG.",26,7.2,0],["BBOX DISTRIB SINT-ELLIGIUS",26,44.5,0]]],
+["ROESELARE",["8800"],"B",50.9444,3.1222,143,468,468,1551,199,6,0,[["BBOX DISTRIB BPOST ROESELARE",13,43.8,0],["BBOX DISTRIB HET LAERE ROE",26,50.8,0],["BBOX DISTRIB G&V ROESELARE",26,72.7,0],["BBOX DISTRIB BR ROESELARE",26,16.7,0],["BBOX DISTRIB. DECATHLON ROESELA",26,44.5,0],["BBOX DISTRIB WZC DE HOVENIER",26,19.4,0]]],
+["LICHTERVELDE",["8810"],"C",50.92,3.08,39,192,192,353,51,2,0,[["BBOX DISTRIB. GARE LICHTERVELDE",13,59.2,0],["BBOX DISTRIB CASA SABRINA LICHTERVELDE",26,20.9,0]]],
+["TORHOUT",["8820"],"B",50.95,3.05,39,156,156,363,38,2,0,[["BBOX DISTRIB GARE TORHOUT",13,48.5,0],["BBOX DISTRIB SHOP WINKL.BE",26,30.1,0]]],
+["HOOGLEDE",["8830"],"C",50.97,3.08,26,96,96,68,5,1,0,[["BBOX DISTRIB DRANKCENTRALE DEPLA GITS",26,10.5,0]]],
+["IZEGEM",["8870"],"B",50.88,3.05,156,312,329,2627,412,4,0,[["BBOX DISTRIB.BOTERSTR IZEGEM",26,78.1,0],["BBOX DISTRIB GARE IZEGEM",39,46.6,0],["BBOX DISTRIB PRINS. IZEGEM",39,69.7,0],["BBOX DISTRIB PRINS. EMLGM",52,59.0,0]]],
+["IEPER",["8906"],"B",50.8514,2.8861,13,78,78,158,12,1,0,[["BBOX DISTRIB FOODPLACE JOTU",13,48.8,0]]],
+["LANGEMARK-POELKAPELLE",["8920"],"C",50.83,2.97,26,96,96,394,46,1,0,[["BBOX DISTRIB TANK POELKAP",26,58.2,0]]],
+["MENEN",["8930"],"B",50.78,2.95,39,156,156,521,114,2,0,[["BBOX DISTRIB POWERSHOP MENEN",13,4.7,0],["BBOX DISTRIB GARE MENEN",26,65.7,0]]],
+["POPERINGE",["8970"],"B",50.85,2.84,26,78,78,462,68,1,0,[["BBOX DISTRIB. GARE POPERINGE",26,65.9,0]]],
+["ZONNEBEKE",["8980"],"C",50.77,2.75,13,96,96,154,13,1,0,[["BBOX DISTRIB T NONNEBOS ZONNEBEKE",13,47.2,0]]],
+["GENT",["9000","9031","9032","9040","9050","9051","9052"],"A",51.0478,3.7196,559,1064,1350,9229,2179,22,22,[["BBOX DISTRIB XIOR ST-PIETERSPLEIN",13,65.5,1],["BBOX DISTRIB BPOST GENT ROOIGEM",13,67.2,1],["BBOX DISTRIB LUKOIL GNT VL",26,71.6,1],["BBOX DISTRIB AZ J PALFIJN",26,57.7,1],["BBOX DISTRIB SUPERMERKADE",26,56.7,1],["BBOX DISTRIB XIOR OVERWALE",26,30.8,1],["BBOX DISTRIB XIOR VOSKENSL",26,40.3,1],["BBOX DISTRIB. XIOR OVERPOORT",26,67.7,1],["BBOX DISTRIB XIOR COUPURE",26,69.9,1],["BBOX DISTRIB. XIOR BRUSSELSEPRT",26,50.3,1],["BBOX DISTRIB ESSO GENT G&V",26,58.0,1],["BBOX DISTRIB. MERCATOR HOGENT",26,64.7,1],["BBOX DISTRIB GARE DRONGEN",26,42.1,1],["BBOX DISTRIB BPOST GENT X WONDELGEM",13,6.0,1],["BBOX DISTRIB DELHAIZE WONDELGEM",39,72.5,1],["BBOX DISTRIB CARREFOUR ST-AMANDS",13,66.2,1],["BBOX DISTRIB LAGO GENT",26,69.1,1],["BBOX DISTRIB LUKOIL AMANDS",39,61.9,1],["BBOX DISTRIB GARE MERELBEKE",13,53.5,1],["BBOX DISTRIB SERVIZO",52,53.9,1],["BBOX DISTRIB. LUKOIL ST-D-WESTREM",26,34.0,1],["BBOX DISTRIB INDIGO TECH L",26,27.4,1]]],
+["LOCHRISTI",["9080"],"B",51.1,3.75,26,78,78,62,3,1,0,[["BBOX DISTRIB GARE BEERVELDE",26,9.9,0]]],
+["MERELBEKE-MELLE",["9090","9820"],"B",51.04,3.675,78,270,270,1050,165,3,0,[["BBOX DISTRIB GARE MELLE",26,43.0,0],["BBOX DISTRIB DE MERELAAR",26,62.0,0],["BBOX DISTRIB PAST. CLAUS",26,43.0,0]]],
+["SINT-NIKLAAS",["9100","9111"],"A",51.1491,4.1509,286,816,984,3936,477,17,17,[["BBOX DISTRIB LIDL ST-N-PLE",26,63.5,1],["BBOX DISTRIB LIDL DRIEGAAI",26,59.4,1],["BBOX DISTRIB. VOSKENSLAAN SN",13,64.2,1],["BBOX DISTRIB ZWEMBAD SN",13,69.2,1],["BBOX DISTRIB. KON ELISABETH SN",13,64.2,1],["BBOX DISTRIB. KUILDAMSTRAAT SN",13,62.2,1],["BBOX DISTRIB. BENELUXSTRAAT SN",13,52.2,1],["BBOX DISTRIB AZALEALAAN SN",13,49.5,1],["BBOX DISTRIB. E PRISSESTRAAT SN",13,50.8,1],["BBOX DISTRIB KROONMOLENPLEIN ST-NIKLAAS",13,44.8,1],["BBOX DISTRIB BREEDSTRAAT-VTS ST-NIKLAAS",13,50.5,1],["BBOX DISTRIB TEN BOS ST-NIKLAAS",13,38.8,1],["BBOX DISTRIB.GARE NIEUWKERKEN",26,36.8,1],["BBOX DISTRIB GARE BELSELE",26,28.1,1],["BBOX DISTRIB GARE SINAAI",26,58.7,1],["BBOX DISTRIB BELSELEDORP ST-NIKLAAS",13,60.5,1],["BBOX DISTRIB MARKTSTRAAT ST-NIKLAAS",13,56.9,1]]],
+["TEMSE",["9140"],"B",51.14,4.08,39,156,265,641,113,2,0,[["BBOX DISTRIB BPOST TEMSE",13,67.9,0],["BBOX-DISTRIB DORPSPLEIN STEENDORP",26,54.4,0]]],
+["LOKEREN",["9160","9180"],"B",51.125,3.99,91,312,432,1616,322,4,0,[["BBOX DISTRIB AMELIES LOKEREN",13,37.8,0],["BBOX DISTRIB LUKOIL LOKER.",26,66.4,0],["BBOX DISTRIB GARE LOKEREN",26,60.9,0],["BBOX DISTRIB MARKTPLEIN",26,70.2,0]]],
+["SINT-GILLIS-WAAS",["9170"],"B",51.08,3.92,26,78,78,294,31,1,0,[["BBOX DISTRIB ST-HELENAPLEIN",26,44.0,0]]],
+["STEKENE",["9190"],"B",51.04,3.95,39,156,166,369,32,2,0,[["BBOX DISTRIB BPOST STEKENE",13,50.5,0],["BBOX DISTRIB CRF EXPRESS KEMZEKE",26,31.1,0]]],
+["DENDERMONDE",["9200"],"B",51.04,4.1,52,156,175,1129,294,2,0,[["BBOX DISTRIB. GARE DENDERMONDE",13,63.9,0],["BBOX DISTRIB BON AP DENDER",39,71.8,0]]],
+["HAMME",["9220"],"B",51.02,4.15,26,78,78,136,11,1,0,[["BBOX DISTRIB KRINGW. HAMME",26,20.9,0]]],
+["WETTEREN",["9230"],"B",51.04,3.98,78,234,234,1157,130,3,0,[["BBOX DISTRIB SUPERWASH WETTEREN",26,46.3,0],["BBOX DISTRIB BON APWETTERE",26,63.9,0],["BBOX DISTRIB GARE WETTEREN",26,61.5,0]]],
+["BUGGENHOUT",["9255"],"B",51.02,4.03,26,78,78,410,69,1,0,[["BBOX DISTRIB. GARE BUGGENHOUT",26,57.0,0]]],
+["WICHELEN",["9260"],"C",50.98,4.07,26,96,166,505,118,1,0,[["BBOX DISTRIB GARE SCHELLEBELLE",26,64.7,0]]],
+["LAARNE",["9270"],"C",51.01,4.0,26,96,96,192,8,1,0,[["BBOX DISTRIB WZC LARENSHOF LAARNE",26,30.8,0]]],
+["LEBBEKE",["9280"],"B",51.06,4.08,26,78,203,461,55,1,0,[["BBOX DISTRIB GARE LEBBEKE",26,67.9,0]]],
+["AALST",["9300","9320"],"B",50.9334,4.0534,143,624,648,2470,559,8,0,[["BBOX DISTRIB BON AP AALST",26,57.2,0],["BBOX DISTRIB ESSO AALST",26,47.8,0],["BBOX DISTRIB P KEIZERSHALL",13,57.2,0],["BBOX DISTRIB LEDEBAAN",13,65.2,0],["BBOX DISTRIB SINT-ANNAZAAL",13,44.1,0],["BBOX DISTRIB DE BRUG",13,65.2,0],["BBOX DISTRIB WATERTOREN",13,70.9,0],["BBOX DISTRIB. GARE EREMBODEGEM",26,63.2,0]]],
+["LEDE",["9340"],"C",50.9,4.08,52,192,192,1184,298,2,0,[["BBOX DISTRIB GARE LEDE",26,79.4,0],["BBOX DISTRIB BON AP LEDE",26,68.7,0]]],
+["NINOVE",["9400"],"B",50.92,4.03,65,234,234,840,97,3,0,[["BBOX DISTRIB GARE NINOVE",13,57.5,0],["BBOX DISTRIB. LUKOIL MEERBEKE",26,49.2,0],["BBOX DISTRIB TASTE ONE VOORDE",26,46.3,0]]],
+["ERPE-MERE",["9420"],"B",50.93,3.99,39,156,156,528,41,2,0,[["BBOX DISTRIB. GARE ERPE-MERE",13,62.5,0],["BBOX DISTRIB GARE BURST",26,50.2,0]]],
+["HAALTERT",["9450"],"B",50.95,3.92,52,156,156,703,52,2,0,[["BBOX DISTRIB GARE HAALTERT",26,55.2,0],["BBOX DISTRIB GARE EDE",26,53.7,0]]],
+["DENDERLEEUW",["9470","9472","9473"],"C",50.87,4.0667,104,384,384,838,60,4,0,[["BBOX DISTRIB CARR. DENDER.",26,56.5,0],["BBOX DISTRIB BEL&BODENDER.",26,36.6,0],["BBOX DISTRIB WZC TER BAKE",26,4.3,0],["BBOX DISTRIB GARE WELLE",26,32.6,0]]],
+["GERAARDSBERGEN",["9500"],"B",50.85,3.87,52,156,156,906,144,2,0,[["BBOX DISTRIB. GARE GERAARDSBERG",26,66.7,0],["BBOX DISTRIB GARE VIANE-MOERBEKE",26,60.7,0]]],
+["HERZELE",["9550"],"B",50.86,3.92,52,156,199,915,158,2,0,[["BBOX DISTRIB GARE HERZELE",26,58.9,0],["BBOX DISTRIB BON AP HERZELE",26,67.7,0]]],
+["LIERDE",["9570"],"C",50.86,3.82,26,96,104,351,41,1,0,[["BBOX DISTRIB GARE LIERDE",26,51.8,0]]],
+["RONSE",["9600"],"B",50.82,3.8,52,156,156,1226,338,2,0,[["BBOX DISTRIB P PORTOIS",26,77.9,0],["BBOX DISTRIB AIMÉ DELHAYE",26,70.6,0]]],
+["ZOTTEGEM",["9620"],"B",50.86,3.76,26,78,78,474,66,1,0,[["BBOX DISTRIB GARE ZOTTEGEM",26,68.2,0]]],
+["KRUISEM",["9750"],"C",50.88,3.67,26,96,96,187,12,1,0,[["BBOX DISTRIB STATION ZINGEM",26,29.3,0]]],
+["NAZARETH-DE PINTE",["9810"],"B",51.0,3.58,39,156,156,368,26,2,0,[["BBOX DISTRIB VALK NAZARETH",13,6.7,0],["BBOX DISTRIB STATION EKE-NAZARETH",26,53.8,0]]],
+["SINT-MARTENS-LATEM",["9830"],"C",51.02,3.62,26,96,96,351,31,1,0,[["BBOX DISTRIB SIMONNET ST-M-LATEM",26,53.5,0]]],
+["DEINZE",["9850"],"B",51.02,3.5,78,234,234,1052,83,3,0,[["BBOX DISTRIB Q8 NEVELE",26,66.0,0],["BBOX DISTRIB GARE LANDEGEM",26,66.0,0],["BBOX DISTRIB GARE HANSBEKE",26,29.9,0]]],
+["AALTER",["9880"],"C",51.08,3.45,52,192,192,360,14,2,0,[["BBOX DISTRIB BON AP AALTER",26,23.4,0],["BBOX DISTRIB GARE AALTER",26,34.4,0]]],
+["LIEVEGEM",["9950"],"C",51.11,3.55,13,96,96,206,29,1,0,[["BBOX DISTRIB GARE WAARSCHOOT",13,59.2,0]]],
+["MALDEGEM",["9990"],"B",51.21,3.44,26,78,78,94,8,1,0,[["BBOX DISTRIB AVA MALDEGEM",26,14.4,0]]]];
+const DATA=D.map(d=>({name:d[0],zips:d[1],zone:d[2],lat:d[3],lng:d[4],cur:d[5],sc1:d[6],sc3:d[7],demand:d[8],overflow:d[9],lk_count:d[10],swap_count:d[11],lockers:d[12].map(l=>({name:l[0],doors:l[1],fr:l[2],swap:!!l[3]})),gap:d[7]-d[5],cov:d[7]>0?Math.round(d[5]/d[7]*100):100,urgency:(d[7]-d[5])>=200?'high':(d[7]-d[5])>=50?'med':(d[7]-d[5])>0?'low':'done'}));
+
+const PT={
+  retail:[
+    {n:"Action",r:"High foot traffic discount retail, extended hours, ideal for parcel pickup"},
+    {n:"Kruidvat",r:"Frequent local visits, wide demographics, good coverage across Belgium"},
+    {n:"HEMA",r:"Central high-street locations, family traffic, service counter infrastructure"},
+    {n:"Zeeman",r:"Budget retailer in every major town, high visit frequency"},
+    {n:"Casa",r:"Home & lifestyle retail with consistent customer flow and accessible parking"},
+  ],
+  supermarket:[
+    {n:"Lidl",r:"Active Bbox partnership, 240 Lidl locations targeted by end 2025. Proven model"},
+    {n:"Colruyt",r:"Belgium #1 retailer by market share, strong rural + suburban presence"},
+    {n:"Delhaize",r:"Premium supermarket, excellent parking infrastructure across Belgium"},
+    {n:"Carrefour Market",r:"Dense neighbourhood network, ideal for residential locker placement"},
+    {n:"Proxy Delhaize",r:"Neighbourhood format, embedded in residential areas, extended hours"},
+  ],
+  hospital:[
+    {n:"Regional Hospital / AZ",r:"Major employer, high daily staff + visitor traffic, 24/7 accessible"},
+    {n:"University Hospital / UZ",r:"Massive employee base + students + visitors, continuous flow"},
+    {n:"Polyclinic / Medical Centre",r:"Regular patient visits, parking lots, wide local catchment"},
+  ],
+  laundry:[
+    {n:"Speed Queen",r:"24/7 self-service laundromats, unattended model matches Bbox perfectly"},
+    {n:"Wasbar",r:"Self-service laundry + cafe, long dwell times for parcel collection"},
+    {n:"Local laundromat",r:"Neighbourhood laundry with regular weekly visitors, loyal base"},
+  ],
+  elderly:[
+    {n:"Armonea / Korian",r:"Largest elderly care group in Belgium, visitor + staff traffic"},
+    {n:"Senior Living Group",r:"Network of care residences, family visitors create steady traffic"},
+    {n:"Vulpia / local OCMW home",r:"Growing care network, central community locations"},
+  ],
+  public:[
+    {n:"NMBS/SNCB Train Station",r:"Existing bpost partnership for station Bboxes, half of stations targeted"},
+    {n:"Gemeentehuis / Town Hall",r:"Trusted public location, central in every municipality"},
+    {n:"Library / Sports Complex",r:"Community hub, regular visitors, safe environment, extended hours"},
+    {n:"De Lijn / TEC Bus Hub",r:"Public transport hub, high commuter traffic, multimodal integration"},
+  ]
+};
+const SL={retail:"Retail",supermarket:"Supermarket",hospital:"Hospital",laundry:"Laundry",elderly:"Elderly Home",public:"Public Space"};
+const SC={retail:"ty-re",supermarket:"ty-su",hospital:"ty-ho",laundry:"ty-la",elderly:"ty-el",public:"ty-pu"};
+
+function genP(m){
+  const segs=["retail","supermarket","hospital","laundry","elderly","public"];
+  const seed=m.name.split("").reduce((a,c)=>a+c.charCodeAt(0),0);
+  const ps=[];
+  segs.forEach((s,i)=>{
+    const opts=PT[s];
+    const pick=opts[(seed+i*3)%opts.length];
+    const base=m.urgency==='high'?90:m.urgency==='med'?82:74;
+    const v=((seed*(i+7))%15)-5;
+    ps.push({name:pick.n,seg:s,rat:pick.r,score:Math.min(98,Math.max(65,base+v))});
+  });
+  ps.sort((a,b)=>b.score-a.score);
+  return ps.slice(0,5);
+}
+
+const map=L.map('map',{center:[50.65,4.35],zoom:8,zoomControl:false,attributionControl:false});
+L.control.zoom({position:'topright'}).addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(map);
+
+let markers={},selM=null,curZone='all',curUrg='all';
+
+function uCol(u){return u==='high'?'#E30613':u==='med'?'#FFC947':u==='low'?'#4ECDC4':'#00C49A'}
+function mSz(g){return g>=500?44:g>=200?38:g>=50?30:g>0?22:16}
+
+function filt(){
+  var s=document.getElementById('si').value.toLowerCase();
+  return DATA.filter(function(m){
+    if(curZone!=='all'&&m.zone!==curZone)return false;
+    if(curUrg==='high'&&m.urgency!=='high')return false;
+    if(curUrg==='med'&&m.urgency!=='med')return false;
+    if(curUrg==='low'&&m.urgency!=='low')return false;
+    if(curUrg==='swap'&&m.swap_count===0)return false;
+    if(s&&!m.name.toLowerCase().includes(s)&&!m.zips.some(function(z){return z.includes(s)})&&!m.zone.toLowerCase().includes(s))return false;
+    return true;
+  });
+}
+
+function mkMarkers(){
+  Object.values(markers).forEach(m=>map.removeLayer(m));markers={};
+  filt().forEach(m=>{
+    const sz=mSz(m.gap),col=uCol(m.urgency);
+    const hasSw=m.swap_count>0;
+    const bdr=hasSw?'2px solid #A882FF':'2px solid rgba(255,255,255,.25)';
+    const lbl=m.gap>999?(m.gap/1000).toFixed(1)+'k':m.gap;
+    const icon=L.divIcon({className:'',html:'<div class="cm" style="width:'+sz+'px;height:'+sz+'px;background:'+col+';font-size:'+(sz>28?11:9)+'px;border:'+bdr+'">'+lbl+'</div>',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]});
+    const tt='<div class="tt-h"><div class="tt-t">'+m.name+(hasSw?' <span style="color:#A882FF;font-size:11px">\u{1F504} '+m.swap_count+' swap'+(m.swap_count>1?'s':'')+'</span>':'')+'</div><div class="tt-s">Zone '+m.zone+' \u00B7 '+m.zips.join(', ')+' \u00B7 '+m.lk_count+' lockers</div></div><div class="tt-g"><div class="tt-c"><div class="tt-v" style="color:'+col+'">'+m.gap+'</div><div class="tt-l">Gap</div></div><div class="tt-c"><div class="tt-v">'+m.cur+'</div><div class="tt-l">Current</div></div><div class="tt-c"><div class="tt-v">'+m.sc3+'</div><div class="tt-l">Sc3 Target</div></div><div class="tt-c"><div class="tt-v">'+m.demand.toLocaleString()+'</div><div class="tt-l">Demand</div></div></div><div class="tt-bw"><div class="tt-bl"><span>Coverage</span><span>'+m.cov+'%</span></div><div class="tt-b"><div class="tt-bf" style="width:'+m.cov+'%;background:'+col+'"></div></div></div>';
+    const mk=L.marker([m.lat,m.lng],{icon:icon}).addTo(map).bindTooltip(tt,{className:'tt',direction:'top',offset:[0,-sz/2-5],opacity:1});
+    mk.on('click',function(){selectMuni(m.name)});
+    markers[m.name]=mk;
+  });
+}
+
+function renderList(){
+  var list=document.getElementById('ml');
+  var uo={high:0,med:1,low:2,done:3};
+  var items=filt().sort(function(a,b){return uo[a.urgency]!==uo[b.urgency]?uo[a.urgency]-uo[b.urgency]:b.gap-a.gap});
+  var html='';
+  items.forEach(function(m,idx){
+    var dc=m.urgency==='high'?'md-h':m.urgency==='med'?'md-m':m.urgency==='low'?'md-l':'md-d';
+    var gc=m.urgency==='high'?'h':m.urgency==='med'?'m':m.urgency==='low'?'l':'d';
+    html+='<div class="mi'+(selM===m.name?' sel':'')+'" data-idx="'+idx+'" data-name="'+m.name.replace(/"/g,'&quot;')+'"><div class="md '+dc+'"></div><div class="mn"><div class="mn-n">'+m.name+(m.swap_count?'<span class="sw-b">'+m.swap_count+' swap'+(m.swap_count>1?'s':'')+'</span>':'')+'</div><div class="mn-m">Z:'+m.zone+' \u00B7 '+m.zips[0]+' \u00B7 '+m.lk_count+'lk \u00B7 '+m.cur+'\u2192'+m.sc3+'</div></div><div class="mg"><div class="mg-v '+gc+'">'+(m.gap===0?'\u2713':'+'+m.gap)+'</div><div class="mg-l">'+(m.gap===0?'covered':'gap')+'</div></div></div>';
+  });
+  list.innerHTML=html;
+  list.querySelectorAll('.mi').forEach(function(el){
+    el.addEventListener('click',function(){selectMuni(this.getAttribute('data-name'))});
+  });
+}
+
+function updateStats(){
+  const f=filt();
+  document.getElementById('hGap').textContent=f.reduce(function(s,m){return s+m.gap},0).toLocaleString();
+  document.getElementById('hSwaps').textContent=f.reduce(function(s,m){return s+m.swap_count},0);
+  var tCur=f.reduce(function(s,m){return s+m.cur},0);
+  var tSc3=f.reduce(function(s,m){return s+m.sc3},0);
+  document.getElementById('hCov').textContent=(tSc3>0?Math.round(tCur/tSc3*100):100)+'%';
+  document.getElementById('hLk').textContent=f.reduce(function(s,m){return s+m.lk_count},0);
+}
+
+function filterList(){renderList();mkMarkers();updateStats();}
+function setZone(z,btn){curZone=z;document.querySelectorAll('.fz').forEach(function(t){t.classList.remove('on')});btn.classList.add('on');filterList();}
+function setUrg(u,btn){curUrg=u;document.querySelectorAll('.fu').forEach(function(t){t.classList.remove('on')});btn.classList.add('on');filterList();}
+
+function selectMuni(name){
+  selM=name;
+  var m=DATA.find(function(x){return x.name===name});
+  if(!m)return;
+  map.flyTo([m.lat,m.lng],Math.max(map.getZoom(),11),{duration:0.7});
+  var partners=genP(m);
+  var col=uCol(m.urgency);
+  document.getElementById('dp').classList.remove('hid');
+
+  var lockersHtml=m.lockers.map(function(l){
+    var frCol=l.fr>=60?'var(--r)':l.fr>=40?'var(--y)':'var(--g)';
+    return '<div class="lr"><div class="lr-n" title="'+l.name+'">'+l.name+'</div><div class="lr-d">'+l.doors+'d</div><div class="lr-f" style="color:'+frCol+'">'+l.fr+'%</div>'+(l.swap?'<div class="lr-sw">SWAP</div>':'')+'</div>';
+  }).join('');
+
+  var partnersHtml=partners.map(function(p,i){
+    var sc=p.score>=85?'var(--g)':p.score>=75?'var(--y)':'var(--b)';
+    return '<div class="pc"><div class="pt"><div class="pn">'+(i+1)+'. '+p.name+'</div><div class="pty '+SC[p.seg]+'">'+SL[p.seg]+'</div></div><div class="pr">'+p.rat+'</div><div class="ps"><div class="psb"><div class="psf" style="width:'+p.score+'%;background:'+sc+'"></div></div><div class="psl" style="color:'+sc+'">'+p.score+'%</div></div></div>';
+  }).join('');
+
+  var tipText='';
+  if(m.urgency==='high') tipText='<strong style="color:var(--r)">\u{1F525} Priority hunt zone.</strong> '+m.gap+' doors to deploy.'+(m.swap_count?' <strong style="color:var(--p)">'+m.swap_count+' lockers flagged for swap</strong> \u2014 coordinate swap + expansion.':'')+' Focus high-traffic spots first. Check if local Lidl is covered (active partnership). NMBS stations pre-approved.';
+  else if(m.urgency==='med') tipText='<strong style="color:var(--y)">\u{1F4C8} Growth opportunity.</strong> '+m.gap+' doors gap.'+(m.swap_count?' <strong style="color:var(--p)">'+m.swap_count+' swap(s) pending</strong> \u2014 combine swap visit with prospecting.':'')+' Mix retail + public spaces. Approach municipality for town hall or library.';
+  else if(m.urgency==='low') tipText='<strong style="color:var(--b)">\u{1F3AF} Almost there.</strong> '+m.gap+' door(s) remaining.'+(m.swap_count?' <strong style="color:var(--p)">'+m.swap_count+' swap(s) pending.</strong>':'')+' Fill neighbourhood gaps with laundromats or small retail.';
+  else tipText='<strong style="color:var(--g)">\u2705 Target reached!</strong> '+(m.swap_count?'<strong style="color:var(--p)">But '+m.swap_count+' locker(s) still need swapping.</strong> Schedule swap visits.':'Monitor usage and consider expansion if demand grows.');
+
+  document.getElementById('dc').innerHTML=
+    '<div class="dh"><button class="dc-btn" onclick="closeD()">\u2715</button><div class="dm">'+m.name+'</div><div class="dsub">Zone '+m.zone+' \u00B7 '+m.zips.join(', ')+' \u00B7 '+m.lk_count+' lockers'+(m.swap_count?' \u00B7 <span style="color:#A882FF">'+m.swap_count+' swaps</span>':'')+'</div></div>'+
+    '<div class="dsg"><div class="ds"><div class="ds-v" style="color:'+col+'">'+m.gap+'</div><div class="ds-l">Door Gap</div></div><div class="ds"><div class="ds-v">'+m.cur+'</div><div class="ds-l">Current</div></div><div class="ds"><div class="ds-v">'+m.sc3+'</div><div class="ds-l">Sc3 Target</div></div></div>'+
+    '<div class="dcc">'+
+    '<div style="margin-bottom:4px"><div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t3)"><span>Coverage</span><span style="font-family:Space Mono,monospace">'+m.cov+'%</span></div><div style="height:6px;background:var(--bg);border-radius:3px;overflow:hidden;margin-top:4px"><div style="height:100%;width:'+m.cov+'%;background:'+col+';border-radius:3px"></div></div></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0"><div class="ds"><div class="ds-v" style="font-size:16px;color:var(--o)">'+m.demand.toLocaleString()+'</div><div class="ds-l">Tot. Demand</div></div><div class="ds"><div class="ds-v" style="font-size:16px;color:var(--y)">'+m.overflow+'</div><div class="ds-l">Overflow</div></div></div>'+
+    '<div class="st">\u{1F4E6} Current Lockers ('+m.lk_count+')</div>'+lockersHtml+
+    '<div class="st">\u{1F3AF} Top 5 Partner Suggestions</div>'+partnersHtml+
+    '<div class="st">\u{1F4A1} Sales Playbook</div><div class="tip">'+tipText+'</div>'+
+    '<div class="tip" style="font-size:11px;color:var(--t3)"><strong>Sc1</strong> (FR%-based): '+m.sc1+' doors \u00B7 <strong>Sc3</strong> (2026 growth): '+m.sc3+' doors<br>Fill rate: <span style="color:var(--g)">green &lt;40%</span> \u00B7 <span style="color:var(--y)">yellow 40-60%</span> \u00B7 <span style="color:var(--r)">red &gt;60%</span> (high = needs capacity)</div>'+
+    '</div>';
+  renderList();
+}
+
+function closeD(){selM=null;document.getElementById('dp').classList.add('hid');renderList();}
+
+mkMarkers();renderList();updateStats();
+</script>
+</body>
+</html>
