@@ -107,6 +107,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);overf
 .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:30px;text-align:center}
 .empty-i{font-size:36px;margin-bottom:12px}.empty-t{font-size:15px;font-weight:600;margin-bottom:6px}
 .empty-d{font-size:12px;color:var(--t3);line-height:1.5}
+.mkr-wrap{overflow:visible!important;width:auto!important;height:auto!important}
+.mkr{display:flex;align-items:center;gap:6px;white-space:nowrap;pointer-events:auto}
+.mk-exp{display:none;background:rgba(15,15,26,.92);border:1px solid var(--bd);border-radius:6px;padding:3px 8px;max-width:220px}
+.mk-nm{font-size:10px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mk-dr{font-size:9px;font-family:'Space Mono',monospace;color:var(--t2)}
+.mk-pt{display:none;font-size:9px;color:var(--p);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#map.zoom-med .mk-exp{display:block}
+#map.zoom-hi .mk-pt{display:block}
+.sr{display:flex;align-items:center;gap:4px;padding:6px 12px;border-bottom:1px solid var(--bd)}
+.sr-l{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-right:4px}
+.sr-b{padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--bd);background:transparent;color:var(--t2);font-family:'DM Sans',sans-serif;transition:all .15s}
+.sr-b:hover{border-color:var(--t3)}
+.sr-b.on{background:var(--r);border-color:var(--r);color:white}
 </style>
 </head>
 <body>
@@ -142,6 +155,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);overf
       <button class="ft fu" data-u="med" onclick="setUrg('med',this)">&#x1F7E1; Med</button>
       <button class="ft fu" data-u="low" onclick="setUrg('low',this)">&#x1F535; Low</button>
       <button class="ft fu" data-u="swap" onclick="setUrg('swap',this)">&#x1F504; Swap</button>
+    </div>
+    <div class="sr">
+      <span class="sr-l">Sort</span>
+      <button class="sr-b on" data-s="urgency" onclick="setSort('urgency',this)">Urgency</button>
+      <button class="sr-b" data-s="gap-desc" onclick="setSort('gap-desc',this)">Gap &#x2193;</button>
+      <button class="sr-b" data-s="gap-asc" onclick="setSort('gap-asc',this)">Gap &#x2191;</button>
     </div>
     <div class="ml" id="ml"></div>
   </div>
@@ -506,17 +525,19 @@ function genP(m){
     const pick=opts[(seed+i*3)%opts.length];
     const base=m.urgency==='high'?90:m.urgency==='med'?82:74;
     const v=((seed*(i+7))%15)-5;
-    ps.push({name:pick.n+' '+m.name,seg:s,rat:pick.r,score:Math.min(98,Math.max(65,base+v))});
+    ps.push({name:pick.n+' '+m.name,baseName:pick.n,seg:s,rat:pick.r,score:Math.min(98,Math.max(65,base+v))});
   });
   ps.sort((a,b)=>b.score-a.score);
   return ps.slice(0,5);
 }
+DATA.forEach(function(m){m.partners=genP(m)});
 
 const map=L.map('map',{center:[50.65,4.35],zoom:8,zoomControl:false,attributionControl:false});
 L.control.zoom({position:'topright'}).addTo(map);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(map);
+map.on('zoomend',function(){var z=map.getZoom(),el=document.getElementById('map');el.classList.toggle('zoom-med',z>=10);el.classList.toggle('zoom-hi',z>=12)});
 
-let markers={},selM=null,curZone='all',curUrg='all';
+let markers={},selM=null,curZone='all',curUrg='all',curSort='urgency';
 
 function uCol(u){return u==='high'?'#E30613':u==='med'?'#FFC947':u==='low'?'#4ECDC4':'#00C49A'}
 function mSz(g){return g>=500?44:g>=200?38:g>=50?30:g>0?22:16}
@@ -541,7 +562,8 @@ function mkMarkers(){
     const hasSw=m.swap_count>0;
     const bdr=hasSw?'2px solid #A882FF':'2px solid rgba(255,255,255,.25)';
     const lbl=m.gap>999?(m.gap/1000).toFixed(1)+'k':m.gap;
-    const icon=L.divIcon({className:'',html:'<div class="cm" style="width:'+sz+'px;height:'+sz+'px;background:'+col+';font-size:'+(sz>28?11:9)+'px;border:'+bdr+'">'+lbl+'</div>',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]});
+    const ptxt=m.partners.slice(0,3).map(function(p){return p.baseName}).join(' \u00B7 ');
+    const icon=L.divIcon({className:'mkr-wrap',html:'<div class="mkr"><div class="cm" style="width:'+sz+'px;height:'+sz+'px;background:'+col+';font-size:'+(sz>28?11:9)+'px;border:'+bdr+'">'+lbl+'</div><div class="mk-exp"><div class="mk-nm">'+m.name+'</div><div class="mk-dr">'+m.cur+'\u2192'+m.sc3+' doors</div><div class="mk-pt">'+ptxt+'</div></div></div>',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]});
     const tt='<div class="tt-h"><div class="tt-t">'+m.name+(hasSw?' <span style="color:#A882FF;font-size:11px">\u{1F504} '+m.swap_count+' swap'+(m.swap_count>1?'s':'')+'</span>':'')+'</div><div class="tt-s">Zone '+m.zone+' \u00B7 '+m.zips.join(', ')+' \u00B7 '+m.lk_count+' lockers</div></div><div class="tt-g"><div class="tt-c"><div class="tt-v" style="color:'+col+'">'+m.gap+'</div><div class="tt-l">Door Gap</div></div><div class="tt-c"><div class="tt-v">'+m.cur+'</div><div class="tt-l">Doors Now</div></div><div class="tt-c"><div class="tt-v">'+m.sc3+'</div><div class="tt-l">Doors Target</div></div><div class="tt-c"><div class="tt-v">'+m.lk_count+'</div><div class="tt-l">Lockers</div></div></div><div class="tt-bw"><div class="tt-bl"><span>Coverage</span><span>'+m.cov+'%</span></div><div class="tt-b"><div class="tt-bf" style="width:'+m.cov+'%;background:'+col+'"></div></div></div><div style="padding:6px 14px 8px;border-top:1px solid var(--bd);font-size:10px;color:var(--t2)"><div style="margin-bottom:2px;font-size:8px;color:var(--t3);text-transform:uppercase;letter-spacing:.4px">Doors per locker</div>'+m.lockers.slice(0,6).map(function(l){return '<span style="display:inline-block;margin:1px 4px 1px 0;padding:1px 5px;background:rgba(255,255,255,.06);border-radius:3px;font-family:Space Mono,monospace;font-size:10px">'+l.doors+'d'+(l.swap?' <span style="color:#A882FF;font-size:8px">SW</span>':'')+'</span>'}).join('')+(m.lockers.length>6?'<span style="color:var(--t3);font-size:9px"> +' +(m.lockers.length-6)+' more</span>':'')+'</div>';
     const mk=L.marker([m.lat,m.lng],{icon:icon}).addTo(map).bindTooltip(tt,{className:'tt',direction:'top',offset:[0,-sz/2-5],opacity:1});
     mk.on('click',function(){selectMuni(m.name)});
@@ -552,7 +574,7 @@ function mkMarkers(){
 function renderList(){
   var list=document.getElementById('ml');
   var uo={high:0,med:1,low:2,done:3};
-  var items=filt().sort(function(a,b){return uo[a.urgency]!==uo[b.urgency]?uo[a.urgency]-uo[b.urgency]:b.gap-a.gap});
+  var items=filt().sort(function(a,b){if(curSort==='gap-desc')return b.gap-a.gap;if(curSort==='gap-asc')return a.gap-b.gap;return uo[a.urgency]!==uo[b.urgency]?uo[a.urgency]-uo[b.urgency]:b.gap-a.gap});
   var html='';
   items.forEach(function(m,idx){
     var dc=m.urgency==='high'?'md-h':m.urgency==='med'?'md-m':m.urgency==='low'?'md-l':'md-d';
@@ -578,13 +600,14 @@ function updateStats(){
 function filterList(){renderList();mkMarkers();updateStats();}
 function setZone(z,btn){curZone=z;document.querySelectorAll('.fz').forEach(function(t){t.classList.remove('on')});btn.classList.add('on');filterList();}
 function setUrg(u,btn){curUrg=u;document.querySelectorAll('.fu').forEach(function(t){t.classList.remove('on')});btn.classList.add('on');filterList();}
+function setSort(s,btn){curSort=s;document.querySelectorAll('.sr-b').forEach(function(t){t.classList.remove('on')});btn.classList.add('on');renderList();}
 
 function selectMuni(name){
   selM=name;
   var m=DATA.find(function(x){return x.name===name});
   if(!m)return;
   map.flyTo([m.lat,m.lng],Math.max(map.getZoom(),11),{duration:0.7});
-  var partners=genP(m);
+  var partners=m.partners;
   var col=uCol(m.urgency);
   document.getElementById('dp').classList.remove('hid');
 
@@ -610,8 +633,8 @@ function selectMuni(name){
     '<div class="dcc">'+
     '<div style="margin-bottom:4px"><div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t3)"><span>Coverage</span><span style="font-family:Space Mono,monospace">'+m.cov+'%</span></div><div style="height:6px;background:var(--bg);border-radius:3px;overflow:hidden;margin-top:4px"><div style="height:100%;width:'+m.cov+'%;background:'+col+';border-radius:3px"></div></div></div>'+
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0"><div class="ds"><div class="ds-v" style="font-size:16px;color:var(--o)">'+m.demand.toLocaleString()+'</div><div class="ds-l">Tot. Demand</div></div><div class="ds"><div class="ds-v" style="font-size:16px;color:var(--y)">'+m.overflow+'</div><div class="ds-l">Overflow</div></div></div>'+
-    '<div class="st">\u{1F4E6} Current Lockers ('+m.lk_count+')</div>'+lockersHtml+
     '<div class="st">\u{1F4CD} 5 Potential Locker Locations</div>'+partnersHtml+
+    '<div class="st">\u{1F4E6} Current Lockers ('+m.lk_count+')</div>'+lockersHtml+
     '<div class="st">\u{1F4A1} Sales Playbook</div><div class="tip">'+tipText+'</div>'+
     '<div class="tip" style="font-size:11px;color:var(--t3)"><strong>Sc1</strong> (FR%-based): '+m.sc1+' doors \u00B7 <strong>Sc3</strong> (2026 growth): '+m.sc3+' doors<br>Fill rate: <span style="color:var(--g)">green &lt;40%</span> \u00B7 <span style="color:var(--y)">yellow 40-60%</span> \u00B7 <span style="color:var(--r)">red &gt;60%</span> (high = needs capacity)</div>'+
     '</div>';
