@@ -506,7 +506,7 @@ function genP(m){
     const pick=opts[(seed+i*3)%opts.length];
     const base=m.urgency==='high'?90:m.urgency==='med'?82:74;
     const v=((seed*(i+7))%15)-5;
-    ps.push({name:pick.n,seg:s,rat:pick.r,score:Math.min(98,Math.max(65,base+v))});
+    ps.push({name:pick.n+' '+m.name,seg:s,rat:pick.r,score:Math.min(98,Math.max(65,base+v))});
   });
   ps.sort((a,b)=>b.score-a.score);
   return ps.slice(0,5);
@@ -542,7 +542,7 @@ function mkMarkers(){
     const bdr=hasSw?'2px solid #A882FF':'2px solid rgba(255,255,255,.25)';
     const lbl=m.gap>999?(m.gap/1000).toFixed(1)+'k':m.gap;
     const icon=L.divIcon({className:'',html:'<div class="cm" style="width:'+sz+'px;height:'+sz+'px;background:'+col+';font-size:'+(sz>28?11:9)+'px;border:'+bdr+'">'+lbl+'</div>',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]});
-    const tt='<div class="tt-h"><div class="tt-t">'+m.name+(hasSw?' <span style="color:#A882FF;font-size:11px">\u{1F504} '+m.swap_count+' swap'+(m.swap_count>1?'s':'')+'</span>':'')+'</div><div class="tt-s">Zone '+m.zone+' \u00B7 '+m.zips.join(', ')+' \u00B7 '+m.lk_count+' lockers</div></div><div class="tt-g"><div class="tt-c"><div class="tt-v" style="color:'+col+'">'+m.gap+'</div><div class="tt-l">Gap</div></div><div class="tt-c"><div class="tt-v">'+m.cur+'</div><div class="tt-l">Current</div></div><div class="tt-c"><div class="tt-v">'+m.sc3+'</div><div class="tt-l">Sc3 Target</div></div><div class="tt-c"><div class="tt-v">'+m.demand.toLocaleString()+'</div><div class="tt-l">Demand</div></div></div><div class="tt-bw"><div class="tt-bl"><span>Coverage</span><span>'+m.cov+'%</span></div><div class="tt-b"><div class="tt-bf" style="width:'+m.cov+'%;background:'+col+'"></div></div></div>';
+    const tt='<div class="tt-h"><div class="tt-t">'+m.name+(hasSw?' <span style="color:#A882FF;font-size:11px">\u{1F504} '+m.swap_count+' swap'+(m.swap_count>1?'s':'')+'</span>':'')+'</div><div class="tt-s">Zone '+m.zone+' \u00B7 '+m.zips.join(', ')+' \u00B7 '+m.lk_count+' lockers</div></div><div class="tt-g"><div class="tt-c"><div class="tt-v" style="color:'+col+'">'+m.gap+'</div><div class="tt-l">Door Gap</div></div><div class="tt-c"><div class="tt-v">'+m.cur+'</div><div class="tt-l">Doors Now</div></div><div class="tt-c"><div class="tt-v">'+m.sc3+'</div><div class="tt-l">Doors Target</div></div><div class="tt-c"><div class="tt-v">'+m.lk_count+'</div><div class="tt-l">Lockers</div></div></div><div class="tt-bw"><div class="tt-bl"><span>Coverage</span><span>'+m.cov+'%</span></div><div class="tt-b"><div class="tt-bf" style="width:'+m.cov+'%;background:'+col+'"></div></div></div><div style="padding:6px 14px 8px;border-top:1px solid var(--bd);font-size:10px;color:var(--t2)"><div style="margin-bottom:2px;font-size:8px;color:var(--t3);text-transform:uppercase;letter-spacing:.4px">Doors per locker</div>'+m.lockers.slice(0,6).map(function(l){return '<span style="display:inline-block;margin:1px 4px 1px 0;padding:1px 5px;background:rgba(255,255,255,.06);border-radius:3px;font-family:Space Mono,monospace;font-size:10px">'+l.doors+'d'+(l.swap?' <span style="color:#A882FF;font-size:8px">SW</span>':'')+'</span>'}).join('')+(m.lockers.length>6?'<span style="color:var(--t3);font-size:9px"> +' +(m.lockers.length-6)+' more</span>':'')+'</div>';
     const mk=L.marker([m.lat,m.lng],{icon:icon}).addTo(map).bindTooltip(tt,{className:'tt',direction:'top',offset:[0,-sz/2-5],opacity:1});
     mk.on('click',function(){selectMuni(m.name)});
     markers[m.name]=mk;
@@ -611,7 +611,7 @@ function selectMuni(name){
     '<div style="margin-bottom:4px"><div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t3)"><span>Coverage</span><span style="font-family:Space Mono,monospace">'+m.cov+'%</span></div><div style="height:6px;background:var(--bg);border-radius:3px;overflow:hidden;margin-top:4px"><div style="height:100%;width:'+m.cov+'%;background:'+col+';border-radius:3px"></div></div></div>'+
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0"><div class="ds"><div class="ds-v" style="font-size:16px;color:var(--o)">'+m.demand.toLocaleString()+'</div><div class="ds-l">Tot. Demand</div></div><div class="ds"><div class="ds-v" style="font-size:16px;color:var(--y)">'+m.overflow+'</div><div class="ds-l">Overflow</div></div></div>'+
     '<div class="st">\u{1F4E6} Current Lockers ('+m.lk_count+')</div>'+lockersHtml+
-    '<div class="st">\u{1F3AF} Top 5 Partner Suggestions</div>'+partnersHtml+
+    '<div class="st">\u{1F4CD} 5 Potential Locker Locations</div>'+partnersHtml+
     '<div class="st">\u{1F4A1} Sales Playbook</div><div class="tip">'+tipText+'</div>'+
     '<div class="tip" style="font-size:11px;color:var(--t3)"><strong>Sc1</strong> (FR%-based): '+m.sc1+' doors \u00B7 <strong>Sc3</strong> (2026 growth): '+m.sc3+' doors<br>Fill rate: <span style="color:var(--g)">green &lt;40%</span> \u00B7 <span style="color:var(--y)">yellow 40-60%</span> \u00B7 <span style="color:var(--r)">red &gt;60%</span> (high = needs capacity)</div>'+
     '</div>';
