@@ -1,0 +1,8 @@
+{
+  "name": "bbox-sales-planner",
+  "version": "1.0.0",
+  "description": "Interactive sales planning tool for bpost Bbox parcel locker deployment",
+  "scripts": {
+    "start": "npx serve public -l $PORT"
+  }
+}
