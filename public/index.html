@@ -128,6 +128,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);overf
 .n6-g{font-family:'Space Mono',monospace;font-size:16px;font-weight:700;flex-shrink:0}
 .n6-d{font-size:10px;color:var(--t2);margin-top:4px;font-family:'Space Mono',monospace}
 .n6-lk{margin-top:6px;padding-top:6px;border-top:1px solid var(--bd)}
+.n6-tip{display:none;margin-top:8px;padding-top:8px;border-top:1px solid var(--bd)}
+.n6:hover .n6-tip{display:block}
+.n6-tip-t{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:4px}
+.n6-tp{display:flex;align-items:center;justify-content:space-between;padding:3px 0;font-size:11px}
+.n6-tp-n{font-weight:600;color:var(--t1)}
+.n6-tp-s{font-size:8px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;padding:1px 6px;border-radius:4px}
+.sg-rf{background:rgba(255,201,71,.12);color:var(--y)}
+.sg-rn{background:rgba(78,205,196,.12);color:var(--b)}
+.sg-ps{background:rgba(255,159,67,.12);color:var(--o)}
+.sg-pd{background:rgba(0,196,154,.12);color:var(--g)}
 </style>
 </head>
 <body>
@@ -540,6 +550,9 @@ function genP(m){
   return ps.slice(0,5);
 }
 DATA.forEach(function(m){m.partners=genP(m)});
+const N6P={rf:["Lidl","Colruyt","Delhaize","Carrefour","Proxy Delhaize","Aldi","Albert Heijn","Spar","Match","Intermarché"],rn:["Action","Kruidvat","HEMA","Zeeman","Casa","Trafic","Brico","Decathlon","MediaMarkt","Blokker"],ps:["TotalEnergies","Q8","Lukoil","Shell","Esso","Avia","Texaco","Gulf"],pd:["NMBS/SNCB Station","Gemeentehuis/Maison Communale","Bibliotheek/Bibliothèque","Sportcomplex","Ziekenhuis/Hôpital","Winkelcentrum","De Lijn/TEC Halte","School/Campus"]};
+const N6SL={rf:"Retail Food",rn:"Retail Non-Food",ps:"Petrol Station",pd:"Public Domain"};
+function genN6P(code){var seed=code.split("").reduce(function(a,c){return a+c.charCodeAt(0)},0);var segs=["rf","rn","ps","pd"];var picks=[];segs.forEach(function(s,i){var o=N6P[s];picks.push({n:o[(seed+i*7)%o.length],s:s})});var xs=segs[(seed*3)%4];picks.push({n:N6P[xs][(seed+17)%N6P[xs].length],s:xs});return picks;}
 
 const map=L.map('map',{center:[50.65,4.35],zoom:8,zoomControl:false,attributionControl:false});
 L.control.zoom({position:'topright'}).addTo(map);
@@ -628,7 +641,8 @@ function selectMuni(name){
       var fc=l[2]>=60?'var(--r)':l[2]>=40?'var(--y)':'var(--g)';
       return '<div class="lr"><div class="lr-n" title="'+l[0]+'">'+l[0]+'</div><div class="lr-d">'+l[1]+'d</div><div class="lr-f" style="color:'+fc+'">'+l[2]+'%</div>'+(l[3]?'<div class="lr-sw">SWAP</div>':'')+'</div>';
     }).join('')+'</div>';}
-    return '<div class="n6"><div class="n6-h"><div><div class="n6-c">'+e[0]+'</div><div class="n6-n">'+e[1]+'</div></div><div class="n6-g" style="color:'+gc+'">'+(e[5]>0?'+'+e[5]:'\u2713')+'</div></div><div class="n6-d">'+e[4]+'\u2192'+e[3]+' doors \u00B7 '+e[2].toLocaleString()+' inhab \u00B7 '+e[6]+' lockers</div>'+lkHtml+'</div>';
+    var tipHtml='<div class="n6-tip"><div class="n6-tip-t">Potential Partners</div>'+genN6P(e[0]).map(function(p){return '<div class="n6-tp"><span class="n6-tp-n">'+p.n+'</span><span class="n6-tp-s sg-'+p.s+'">'+N6SL[p.s]+'</span></div>'}).join('')+'</div>';
+    return '<div class="n6"><div class="n6-h"><div><div class="n6-c">'+e[0]+'</div><div class="n6-n">'+e[1]+'</div></div><div class="n6-g" style="color:'+gc+'">'+(e[5]>0?'+'+e[5]:'\u2713')+'</div></div><div class="n6-d">'+e[4]+'\u2192'+e[3]+' doors \u00B7 '+e[2].toLocaleString()+' inhab \u00B7 '+e[6]+' lockers</div>'+lkHtml+tipHtml+'</div>';
   }).join('');
 
   var partnersHtml=partners.map(function(p,i){
