@@ -128,11 +128,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);overf
 .n6-g{font-family:'Space Mono',monospace;font-size:16px;font-weight:700;flex-shrink:0}
 .n6-d{font-size:10px;color:var(--t2);margin-top:4px;font-family:'Space Mono',monospace}
 .n6-lk{margin-top:6px;padding-top:6px;border-top:1px solid var(--bd)}
-.n6-tip{display:none;position:fixed;z-index:9999;background:var(--c);border:1px solid var(--bd);border-radius:10px;padding:10px 14px;box-shadow:0 8px 32px rgba(0,0,0,.6);pointer-events:none;min-width:240px;max-width:300px}
-.n6-tip-t{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:4px}
-.n6-tp{display:flex;align-items:center;justify-content:space-between;padding:3px 0;font-size:11px}
+.n6{cursor:pointer}
+.n6.open{border-color:rgba(227,6,19,.4)}
+.n6-ps{display:none;margin-top:8px;padding-top:8px;border-top:1px solid var(--bd)}
+.n6.open .n6-ps{display:block}
+.n6-ps-t{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:6px}
+.n6-tp{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:var(--c);border-radius:6px;margin-bottom:4px;font-size:12px}
 .n6-tp-n{font-weight:600;color:var(--t1)}
-.n6-tp-s{font-size:8px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;padding:1px 6px;border-radius:4px}
+.n6-tp-s{font-size:8px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;padding:2px 8px;border-radius:4px}
 .sg-rf{background:rgba(255,201,71,.12);color:var(--y)}
 .sg-rn{background:rgba(78,205,196,.12);color:var(--b)}
 .sg-ps{background:rgba(255,159,67,.12);color:var(--o)}
@@ -192,7 +195,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);overf
       <div class="leg-i" style="margin-top:6px;border-top:1px solid var(--bd);padding-top:6px"><div class="leg-c" style="background:var(--p)"></div>Has swap-pending lockers</div>
     </div>
   </div>
-  <div class="n6-tip" id="n6tip"></div>
   <div class="dp hid" id="dp">
     <div id="dc">
       <div class="empty"><div class="empty-i">&#x1F4CD;</div><div class="empty-t">Select a municipality</div><div class="empty-d">Click a marker or pick from the list to see locker details, swap info, and partner suggestions.</div></div>
@@ -641,7 +643,8 @@ function selectMuni(name){
       var fc=l[2]>=60?'var(--r)':l[2]>=40?'var(--y)':'var(--g)';
       return '<div class="lr"><div class="lr-n" title="'+l[0]+'">'+l[0]+'</div><div class="lr-d">'+l[1]+'d</div><div class="lr-f" style="color:'+fc+'">'+l[2]+'%</div>'+(l[3]?'<div class="lr-sw">SWAP</div>':'')+'</div>';
     }).join('')+'</div>';}
-    return '<div class="n6" data-n6="'+e[0]+'"><div class="n6-h"><div><div class="n6-c">'+e[0]+'</div><div class="n6-n">'+e[1]+'</div></div><div class="n6-g" style="color:'+gc+'">'+(e[5]>0?'+'+e[5]:'\u2713')+'</div></div><div class="n6-d">'+e[4]+'\u2192'+e[3]+' doors \u00B7 '+e[2].toLocaleString()+' inhab \u00B7 '+e[6]+' lockers</div>'+lkHtml+'</div>';
+    var psHtml='<div class="n6-ps"><div class="n6-ps-t">Potential Partners</div>'+genN6P(e[0]).map(function(p){return '<div class="n6-tp"><span class="n6-tp-n">'+p.n+'</span><span class="n6-tp-s sg-'+p.s+'">'+N6SL[p.s]+'</span></div>'}).join('')+'</div>';
+    return '<div class="n6" data-n6="'+e[0]+'"><div class="n6-h"><div><div class="n6-c">'+e[0]+'</div><div class="n6-n">'+e[1]+'</div></div><div class="n6-g" style="color:'+gc+'">'+(e[5]>0?'+'+e[5]:'\u2713')+'</div></div><div class="n6-d">'+e[4]+'\u2192'+e[3]+' doors \u00B7 '+e[2].toLocaleString()+' inhab \u00B7 '+e[6]+' lockers</div>'+lkHtml+psHtml+'</div>';
   }).join('');
 
   var partnersHtml=partners.map(function(p,i){
@@ -671,26 +674,16 @@ function selectMuni(name){
 }
 
 function bindN6Tips(){
-  var tip=document.getElementById('n6tip');
   document.querySelectorAll('.n6[data-n6]').forEach(function(el){
-    el.addEventListener('mouseenter',function(){
-      var code=this.getAttribute('data-n6');
-      var ps=genN6P(code);
-      tip.innerHTML='<div class="n6-tip-t">Potential Partners \u00B7 '+code+'</div>'+ps.map(function(p){return '<div class="n6-tp"><span class="n6-tp-n">'+p.n+'</span><span class="n6-tp-s sg-'+p.s+'">'+N6SL[p.s]+'</span></div>'}).join('');
-      tip.style.display='block';
+    el.addEventListener('click',function(ev){
+      ev.stopPropagation();
+      var wasOpen=this.classList.contains('open');
+      document.querySelectorAll('.n6.open').forEach(function(o){o.classList.remove('open')});
+      if(!wasOpen)this.classList.add('open');
     });
-    el.addEventListener('mousemove',function(ev){
-      var tip=document.getElementById('n6tip');
-      var x=ev.clientX+16,y=ev.clientY-10;
-      if(x+280>window.innerWidth)x=ev.clientX-290;
-      if(y+tip.offsetHeight>window.innerHeight)y=window.innerHeight-tip.offsetHeight-8;
-      if(y<0)y=8;
-      tip.style.left=x+'px';tip.style.top=y+'px';
-    });
-    el.addEventListener('mouseleave',function(){tip.style.display='none';});
   });
 }
-function closeD(){selM=null;document.getElementById('dp').classList.add('hid');document.getElementById('n6tip').style.display='none';renderList();}
+function closeD(){selM=null;document.getElementById('dp').classList.add('hid');renderList();}
 
 mkMarkers();renderList();updateStats();
 </script>
