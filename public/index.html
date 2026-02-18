@@ -1058,12 +1058,6 @@ function showHighlight(muniName,layer){
   if(hoveredName===muniName)return;
   clearHighlight();
   hoveredName=muniName;
-  // Draw municipality outer boundary
-  var muniFeat=BOUNDS[muniName];
-  if(muniFeat){
-    var muniLayer=L.geoJSON(muniFeat,{style:{color:'#333',weight:2,fillColor:'transparent',fillOpacity:0},interactive:false}).addTo(map);
-    hoverLabels.push(muniLayer);
-  }
   // Draw each NIS6 polygon with a distinct color + gap label at centroid
   var n6entries=N6[muniName]||[];
   n6entries.forEach(function(e,i){
