@@ -996,9 +996,6 @@ var n6HoverLayer=null;
 var hoverLabels=[];
 var hoveredName=null;
 var defaultStyle={color:'transparent',weight:0,fillColor:'transparent',fillOpacity:0};
-var n6DefaultStyle={color:'var(--bd)',weight:1,fillColor:'transparent',fillOpacity:0};
-var n6HighStyle=function(gap){var c=gap>=200?'#E30613':gap>=50?'#D4A017':gap>0?'#1A8A7D':'#00966F';return{color:c,weight:2,fillColor:c,fillOpacity:0.15}};
-
 // Load municipality boundaries
 var muniReady=fetch('belgium-municipalities.topojson').then(function(r){return r.json()}).then(function(topo){
   var features=topojson.feature(topo,topo.objects.layer).features;
@@ -1059,18 +1056,19 @@ function showHighlight(muniName,layer){
   if(hoveredName===muniName)return;
   clearHighlight();
   hoveredName=muniName;
+  // Draw single unified municipality boundary
+  var muniFeat=BOUNDS[muniName];
+  if(muniFeat){
+    var muniLayer=L.geoJSON(muniFeat,{style:{color:'#E30613',weight:2,fillColor:'#E30613',fillOpacity:0.10,dashArray:'6 3'},interactive:false}).addTo(map);
+    hoverLabels.push(muniLayer);
+  }
+  // Place NIS6 gap labels at real geographic centroids
   var n6entries=N6[muniName]||[];
-  if(!n6entries.length)return;
-  // Draw each NIS6 sub-area polygon and place gap label at its real centroid
   n6entries.forEach(function(e){
     var code=e[0];
     var gap=e[5];
     var feat=N6GEO[code];
     if(!feat)return;
-    // Draw NIS6 polygon border
-    var n6layer=L.geoJSON(feat,{style:n6HighStyle(gap),interactive:false}).addTo(map);
-    hoverLabels.push(n6layer);
-    // Place gap label at the real centroid
     var lat=feat.properties._cLat;
     var lng=feat.properties._cLng;
     var col=gap>=200?'#E30613':gap>=50?'#D4A017':gap>0?'#1A8A7D':'#00966F';
