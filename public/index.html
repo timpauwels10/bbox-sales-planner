@@ -1052,27 +1052,32 @@ Promise.all([muniReady,n6Ready]).then(function(){
   }).addTo(map);
 }).catch(function(err){console.warn('Boundary data not loaded:',err)});
 
+var N6_COLORS=['#4285F4','#EA4335','#FBBC04','#34A853','#FF6D01','#46BDC6','#7B61FF','#E8710A','#1AA260','#D93025','#1967D2','#E37400','#0D652D','#B31412','#174EA6','#A142F4'];
+
 function showHighlight(muniName,layer){
   if(hoveredName===muniName)return;
   clearHighlight();
   hoveredName=muniName;
-  // Draw single unified municipality boundary
+  // Draw municipality outer boundary
   var muniFeat=BOUNDS[muniName];
   if(muniFeat){
-    var muniLayer=L.geoJSON(muniFeat,{style:{color:'#E30613',weight:2,fillColor:'#E30613',fillOpacity:0.10,dashArray:'6 3'},interactive:false}).addTo(map);
+    var muniLayer=L.geoJSON(muniFeat,{style:{color:'#333',weight:2,fillColor:'transparent',fillOpacity:0},interactive:false}).addTo(map);
     hoverLabels.push(muniLayer);
   }
-  // Place NIS6 gap labels at real geographic centroids
+  // Draw each NIS6 polygon with a distinct color + gap label at centroid
   var n6entries=N6[muniName]||[];
-  n6entries.forEach(function(e){
+  n6entries.forEach(function(e,i){
     var code=e[0];
     var gap=e[5];
     var feat=N6GEO[code];
     if(!feat)return;
+    var fillCol=N6_COLORS[i%N6_COLORS.length];
+    var n6layer=L.geoJSON(feat,{style:{color:'#fff',weight:1.5,fillColor:fillCol,fillOpacity:0.25},interactive:false}).addTo(map);
+    hoverLabels.push(n6layer);
     var lat=feat.properties._cLat;
     var lng=feat.properties._cLng;
-    var col=gap>=200?'#E30613':gap>=50?'#D4A017':gap>0?'#1A8A7D':'#00966F';
-    var icon=L.divIcon({className:'n6-hl',html:'<div class="n6-hl-n">'+e[1]+'</div><div class="n6-hl-g" style="color:'+col+'">'+(gap>0?'+'+gap:'\u2713')+'</div>',iconSize:[0,0],iconAnchor:[0,10]});
+    var gapCol=gap>=200?'#E30613':gap>=50?'#D4A017':gap>0?'#1A8A7D':'#00966F';
+    var icon=L.divIcon({className:'n6-hl',html:'<div class="n6-hl-n" style="color:'+fillCol+'">'+e[1]+'</div><div class="n6-hl-g" style="color:'+gapCol+'">'+(gap>0?'+'+gap:'\u2713')+'</div>',iconSize:[0,0],iconAnchor:[0,10]});
     var mk=L.marker([lat,lng],{icon:icon,interactive:false,zIndexOffset:3000}).addTo(map);
     hoverLabels.push(mk);
   });
