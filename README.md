@@ -24,9 +24,9 @@ Built to help field sales teams instantly see where to hunt for new locations an
 
 ## Data source
 
-Built from `C_Lean_Lockers_Performance_SWAP.xlsx` containing:
+Built from `Capacity KPIs based on doors per NIS7 v3 - 2026.01.26.xlsx` containing:
 
-- **17,615** current doors → **56,820** Sc3 2026 target = **39,205 door gap**
+- **44,149** current doors → **123,372** Sc3 2026 target = **79,223 door gap**
 - **305** lockers flagged for swap (concentrated in Zone A)
 - Fill rates, overflow counts, and demand per locker
 - Three scenarios: Sc1 (fill rate-based), Sc2 (no capacity overflow), Sc3 (2026 growth forecast)
@@ -46,8 +46,8 @@ Built from `C_Lean_Lockers_Performance_SWAP.xlsx` containing:
 | Zone | Municipalities | Door Gap | Swaps |
 |------|---------------|----------|-------|
 | **A** | 29 | 8,270 | 251 |
-| **B** | 150 | 19,241 | 54 |
-| **C** | 113 | 11,694 | 0 |
+| **B** | 199 | 35,001 | 54 |
+| **C** | 271 | 35,952 | 0 |
 
 ## Top priority municipalities
 
@@ -58,6 +58,9 @@ Built from `C_Lean_Lockers_Performance_SWAP.xlsx` containing:
 | Beveren-Kruibeke-Zwijndrecht | A | 351 | 1,194 | 843 | 3 |
 | Gent | A | 559 | 1,350 | 791 | 22 |
 | Leuven | A | 1,092 | 1,861 | 769 | 37 |
+| Evergem | B | 329 | 1,071 | 742 | 0 |
+| Maasmechelen | B | 457 | 1,184 | 727 | 0 |
+| Grimbergen | B | 443 | 1,159 | 716 | 0 |
 | Vilvoorde | B | 221 | 936 | 715 | 0 |
 | Sint-Niklaas | A | 286 | 984 | 698 | 17 |
 
