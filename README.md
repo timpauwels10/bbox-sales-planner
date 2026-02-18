@@ -5,7 +5,7 @@
 Built to help field sales teams instantly see where to hunt for new locations and whom to contact.
 
 ![Status](https://img.shields.io/badge/municipalities-499-blue)
-![Status](https://img.shields.io/badge/lockers-779-orange)
+![Status](https://img.shields.io/badge/lockers-1105-orange)
 ![Status](https://img.shields.io/badge/swaps_pending-305-purple)
 
 ---
