@@ -4,7 +4,7 @@
 
 Built to help field sales teams instantly see where to hunt for new locations and whom to contact.
 
-![Status](https://img.shields.io/badge/municipalities-292-blue)
+![Status](https://img.shields.io/badge/municipalities-499-blue)
 ![Status](https://img.shields.io/badge/lockers-779-orange)
 ![Status](https://img.shields.io/badge/swaps_pending-305-purple)
 
@@ -14,7 +14,7 @@ Built to help field sales teams instantly see where to hunt for new locations an
 
 | Feature | Description |
 |---------|-------------|
-| **Interactive map** | Dark-themed Leaflet map of Belgium with 292 municipality markers, sized and colored by door gap |
+| **Interactive map** | Dark-themed Leaflet map of Belgium with 499 municipality markers, sized and colored by door gap |
 | **Hover tooltips** | Instant stats: current doors, Sc3 2026 target, gap, total demand, coverage % |
 | **Dual filters** | Independent Zone (A/B/C) + Status (High/Med/Low/Swap) filters that work simultaneously |
 | **Searchable sidebar** | Find any municipality by name, zip code, or zone — sorted by urgency |
